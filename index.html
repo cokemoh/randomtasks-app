@@ -426,7 +426,7 @@ body {
 .delete-row-btn {
   width: 44px; height: 44px; border: none; background: none; cursor: pointer;
   border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
-  color: var(--text-disabled); flex-shrink: 0; transition: background 0.13s, color 0.13s;
+  color: var(--text-secondary); flex-shrink: 0; transition: background 0.13s, color 0.13s;
 }
 .delete-row-btn:hover { color: var(--fig-red); }
 .delete-row-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
@@ -614,12 +614,12 @@ body {
 .icon-btn {
   width: 44px; height: 44px; border: none; background: none; cursor: pointer;
   border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
-  color: var(--text-disabled); flex-shrink: 0; transition: background 0.13s, color 0.13s;
+  color: var(--text-secondary); flex-shrink: 0; transition: background 0.13s, color 0.13s;
 }
 .icon-btn:active { background: rgba(255,255,255,0.08); }
 .icon-btn.delete-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
 .icon-btn.add-sub-btn:active { background: rgba(10,207,131,0.12); color: var(--fig-green); }
-.icon-btn.task-action-btn { color: var(--text-disabled); }
+.icon-btn.task-action-btn { color: var(--text-secondary); }
 .icon-btn.task-action-btn:hover { color: var(--text-secondary); }
 .icon-btn.task-action-btn.repeat-active { color: var(--fig-purple); }
 .subtasks { overflow: hidden; transition: max-height 0.28s ease; background: rgba(0,0,0,0.15); border-top: 1px solid var(--border); }
@@ -660,7 +660,7 @@ body {
 .sub-icon-btn {
   width: 44px; height: 44px; border: none; background: none; cursor: pointer;
   border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
-  color: var(--text-disabled); flex-shrink: 0;
+  color: var(--text-secondary); flex-shrink: 0;
 }
 .sub-icon-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
 .sub-add-row {
@@ -3222,7 +3222,7 @@ function render() {
              </div>`
           : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
         const subEditBtn = !isEditingSub
-          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-disabled)">
+          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-secondary)">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
              </button>` : '';
         subRows += `
@@ -3684,7 +3684,7 @@ function renderBacklog() {
              </div>`
           : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
         const subEditBtn = !isEditingSub
-          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-disabled)">
+          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-secondary)">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
              </button>` : '';
         subRows += `
