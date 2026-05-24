@@ -17,6 +17,7 @@ export default async function handler(request, context) {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ p_token: token }),
@@ -24,6 +25,19 @@ export default async function handler(request, context) {
     const rows = await res.json();
     if (rows?.length) listName = rows[0].name;
   } catch (_) {}
+
+  if (listName === 'a list') {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/lists?share_token=eq.${token}&select=name`, {
+        headers: {
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+      });
+      const rows = await res.json();
+      if (rows?.length) listName = rows[0].name;
+    } catch (_) {}
+  }
 
   const title = esc(`Join my ${listName} list`);
   const desc  = esc(`You've been invited to collaborate on "${listName}" in randomtasks.`);
