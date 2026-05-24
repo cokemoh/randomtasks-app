@@ -3320,7 +3320,7 @@ function render() {
           <div class="swipe-content" id="sc-${item.id}"
             ontouchstart="swipeTouchStart(event,'${item.id}')" ontouchmove="swipeTouchMove(event,'${item.id}')" ontouchend="swipeTouchEnd(event,'${item.id}')">
             <div class="item${isDone ? ' done' : ''}${noSubsClass}${isEditing ? ' editing' : ''}" onclick="${isEditing ? '' : `toggleItem('${item.id}')`}">
-              ${!isDone ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
+              ${(!isDone && !isEditing) ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
                 <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
                   <circle cx="3" cy="2"  r="1.5"/><circle cx="7" cy="2"  r="1.5"/>
                   <circle cx="3" cy="8"  r="1.5"/><circle cx="7" cy="8"  r="1.5"/>
@@ -3332,7 +3332,7 @@ function render() {
                   <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#1E1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
-              ${!isDone ? `<div class="item-num${isPicked ? ' item-num-picked' : ''}">${numInner}</div>` : ''}
+              ${(!isDone && !isEditing) ? `<div class="item-num${isPicked ? ' item-num-picked' : ''}">${numInner}</div>` : ''}
               ${itemBodyHtml}
               ${actionBtnsHtml}
               ${expandHtml}
@@ -3732,7 +3732,7 @@ function renderBacklog() {
           <div class="swipe-content" id="sc-${item.id}"
             ${!isDone ? `ontouchstart="swipeTouchStart(event,'${item.id}')" ontouchmove="swipeTouchMove(event,'${item.id}')" ontouchend="swipeTouchEnd(event,${item.id},true)"` : ''}>
             <div class="item${isDone ? ' done' : ''}${noSubsClass}${isEditing ? ' editing' : ''}" onclick="${isEditing ? '' : `toggleBacklogItem('${item.id}')`}">
-              ${!isDone ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
+              ${(!isDone && !isEditing) ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
                 <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
                   <circle cx="3" cy="2" r="1.5"/><circle cx="7" cy="2" r="1.5"/>
                   <circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/>
