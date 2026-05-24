@@ -1193,7 +1193,7 @@ button.drawer-list-icon:active { transform: scale(0.88); }
   cursor: text; word-break: break-all;
 }
 .icon-picker-input:focus { border-color: var(--fig-purple); }
-.icon-picker-input:empty::before { content: '😀'; color: var(--text-disabled); }
+.icon-picker-input:empty:not(:focus)::before { content: '😀'; color: var(--text-disabled); }
 .icon-picker-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
 </style>
 <script>
@@ -3157,6 +3157,7 @@ function openIconPicker(listId) {
       try {
         const dataUrl = src.startsWith('data:') ? src : await blobToDataUrl(src);
         setListIcon(listId, dataUrl, true);
+        input.blur(); // dismiss keyboard so Done button is visible
       } catch(e) { console.warn('Genmoji capture failed', e); }
     } else {
       const chars = [...input.textContent];
@@ -3166,6 +3167,7 @@ function openIconPicker(listId) {
 
   document.getElementById('icon-picker-modal').classList.add('open');
   openModal();
+  setTimeout(() => input.focus(), 150);
 }
 
 function closeIconPicker() {
