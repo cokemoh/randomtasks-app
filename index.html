@@ -1,0 +1,4702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Tasks"/>
+<meta name="theme-color" content="#1E1E1E"/>
+<title>Tasks</title>
+<link rel="apple-touch-icon" id="app-icon-link"/>
+<link rel="icon" type="image/png" id="favicon-link"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --fig-red:    #F24E1E;
+  --fig-salmon: #FF7262;
+  --fig-purple: #A259FF;
+  --fig-blue:   #1ABCFE;
+  --fig-green:  #0ACF83;
+  --fig-dark3:  #1E1E1E;
+  --primary-dim: rgba(162,89,255,0.15);
+  --surface:       #2C2C2C;
+  --surface-raised:#333333;
+  --surface-hover: #3A3A3A;
+  --surface-input: #3D3D3D;
+  --border:        rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.18);
+  --text-primary:  #F5F5F5;
+  --text-secondary:#A0A0A0;
+  --text-disabled: #666666;
+  --radius-s: 6px; --radius-m: 10px; --radius-l: 14px;
+  --radius-xl: 20px; --radius-full: 999px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--fig-dark3);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.app {
+  min-height: 100svh;
+  background: var(--fig-dark3);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 20px 12px 80px;
+}
+.card {
+  width: 100%; max-width: 560px;
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.top-bar {
+  padding: 16px 16px 14px;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.top-bar-left { display: flex; align-items: center; gap: 10px; }
+.logo-mark { width: 30px; height: 30px; flex-shrink: 0; }
+.top-bar-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+.top-bar-sub { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+.pick-btn {
+  flex-shrink: 0; background: var(--primary-dim);
+  color: var(--fig-purple); border: 1px solid rgba(162,89,255,0.3);
+  border-radius: var(--radius-full); font-family: 'Inter', sans-serif;
+  font-size: 12px; font-weight: 500; padding: 7px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.pick-btn:active { background: rgba(162,89,255,0.28); }
+.pick-btn:disabled { opacity: 0.4; }
+
+/* Speed Round button */
+.speed-btn {
+  flex-shrink: 0; background: rgba(242,78,30,0.15);
+  color: var(--fig-red); border: 1px solid rgba(242,78,30,0.35);
+  border-radius: var(--radius-full); font-family: 'Inter', sans-serif;
+  font-size: 12px; font-weight: 500; padding: 7px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.speed-btn:active { background: rgba(242,78,30,0.28); }
+.speed-btn.active { background: var(--fig-red); color: #fff; border-color: var(--fig-red); }
+
+/* Speed Round panel */
+.speed-panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s cubic-bezier(0.2,0,0,1);
+  border-bottom: 0px solid transparent;
+}
+.speed-panel.open {
+  max-height: 420px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.speed-panel-inner {
+  background: linear-gradient(135deg, #F24E1E 0%, #FF7262 50%, #A259FF 100%);
+  padding: 24px 20px 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  position: relative; overflow: hidden;
+}
+/* subtle animated shimmer */
+.speed-panel-inner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.speed-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255,255,255,0.75);
+}
+
+/* The big timer display */
+.speed-timer {
+  font-size: 72px; font-weight: 600; color: #fff;
+  letter-spacing: -2px; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  transition: opacity 0.2s;
+  position: relative; z-index: 1;
+}
+.speed-timer.faded { opacity: 0.4; }
+
+/* Countdown overlay (3, 2, 1, Go!) */
+.speed-countdown {
+  font-size: 96px; font-weight: 700; color: #fff;
+  line-height: 1; text-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  animation: countPop 0.55s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative; z-index: 1;
+}
+@keyframes countPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.speed-countdown.go { color: #0ACF83; font-size: 80px; }
+
+/* Timer controls */
+.speed-controls { display: flex; gap: 12px; position: relative; z-index: 1; }
+.speed-go-btn {
+  background: #fff; color: var(--fig-red);
+  border: none; border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 10px 28px; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+  letter-spacing: 0.2px;
+}
+.speed-go-btn:active { transform: scale(0.95); filter: brightness(0.95); }
+.speed-pause-btn {
+  background: rgba(255,255,255,0.2); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4); border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 10px 22px; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: flex; align-items: center; gap: 7px;
+}
+.speed-pause-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
+.speed-reset-btn {
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4); border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+  padding: 10px 22px; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: flex; align-items: center; gap: 7px;
+}
+.speed-reset-btn:active { background: rgba(255,255,255,0.25); transform: scale(0.95); }
+
+/* Mute toggle button */
+.speed-mute-btn {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);
+  border: 1.5px solid rgba(255,255,255,0.25); border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  z-index: 2;
+}
+.speed-mute-btn:active { background: rgba(255,255,255,0.28); }
+.speed-mute-btn.muted { background: rgba(0,0,0,0.25); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.15); }
+
+/* Speed round results */
+.speed-results {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  position: relative; z-index: 1; text-align: center; padding: 4px 0;
+  animation: countPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+.speed-results-headline {
+  font-size: 22px; font-weight: 700; color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  line-height: 1.2;
+}
+.speed-results-sub {
+  font-size: 13px; color: rgba(255,255,255,0.8); font-weight: 400;
+}
+.speed-results-stats {
+  display: flex; gap: 16px; margin-top: 4px;
+}
+.speed-stat {
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-l);
+  padding: 12px 20px;
+  width: 100px;        /* fixed equal width */
+  flex-shrink: 0;
+  text-align: center;
+}
+.speed-stat-num {
+  font-size: 36px; font-weight: 700; color: #fff; line-height: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+.speed-stat-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: rgba(255,255,255,0.7);
+  margin-top: 4px;
+}
+
+/* Confetti canvas sits over the speed panel inner */
+#confetti-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+  border-radius: inherit;
+}
+
+/* Duration picker */
+.duration-picker {
+  display: flex; gap: 8px; align-items: center;
+  position: relative; z-index: 1; flex-wrap: wrap; justify-content: center;
+}
+.dur-btn {
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.3); border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+  padding: 6px 14px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.dur-btn:active { transform: scale(0.95); }
+.dur-btn.selected {
+  background: rgba(255,255,255,0.35);
+  border-color: rgba(255,255,255,0.8);
+}
+.dur-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* Custom duration input row */
+.custom-dur-row {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-full);
+  padding: 4px 6px 4px 14px;
+  transition: border-color 0.15s;
+}
+.custom-dur-row:focus-within { border-color: rgba(255,255,255,0.8); }
+.custom-dur-input {
+  background: transparent; border: none; outline: none;
+  font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600;
+  color: #fff; width: 36px; text-align: center;
+  -moz-appearance: textfield;
+}
+.custom-dur-input::-webkit-inner-spin-button,
+.custom-dur-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.custom-dur-input::placeholder { color: rgba(255,255,255,0.5); font-weight: 400; }
+.custom-dur-label { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 500; }
+.custom-dur-set {
+  background: rgba(255,255,255,0.25); color: #fff; border: none;
+  border-radius: var(--radius-full); font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer;
+  transition: background 0.13s; white-space: nowrap;
+}
+.custom-dur-set:active { background: rgba(255,255,255,0.4); }
+.banner-wrap { padding: 12px 14px; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+.pick-banner {
+  background: linear-gradient(135deg, rgba(162,89,255,0.18), rgba(26,188,254,0.12));
+  border: 1px solid rgba(162,89,255,0.35); border-radius: var(--radius-l);
+  padding: 11px 12px; display: flex; align-items: center; gap: 12px;
+  animation: bannerIn 0.2s ease;
+}
+@keyframes bannerIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:none; } }
+.banner-icon {
+  width: 34px; height: 34px; border-radius: var(--radius-s);
+  background: linear-gradient(135deg, var(--fig-purple), var(--fig-blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.banner-body { flex: 1; min-width: 0; }
+.banner-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--fig-purple); margin-bottom: 2px; }
+.banner-text { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pick-dismiss {
+  background: none; border: none; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); font-size: 18px; flex-shrink: 0;
+}
+.add-area { padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+
+/* ── Centered action bar ── */
+.action-bar {
+  padding: 10px 14px;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.add-field {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-input); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full); padding: 0 6px 0 16px; height: 44px;
+  transition: border-color 0.15s;
+}
+.add-field:focus-within { border-color: var(--fig-purple); box-shadow: 0 0 0 2px rgba(162,89,255,0.2); }
+.add-input {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 16px; color: var(--text-primary); outline: none;
+}
+.add-input::placeholder { color: var(--text-disabled); }
+.add-btn {
+  width: 32px; height: 32px; background: var(--fig-purple); color: #fff;
+  border: none; border-radius: var(--radius-full); font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(162,89,255,0.45); line-height: 1; padding-bottom: 1px;
+}
+.add-btn:active { transform: scale(0.93); }
+.section-label { padding: 10px 14px 5px; font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-disabled); }
+
+/* Section label row with inline action */
+.section-label-row {
+  padding: 10px 14px 5px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-label-text {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.uncheck-all-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+  color: var(--text-disabled); padding: 2px 0;
+  transition: color 0.13s;
+  letter-spacing: 0.1px;
+}
+.uncheck-all-btn:active { color: var(--fig-purple); }
+
+/* ── Repeat day picker ── */
+.repeat-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px 6px 44px;
+  border-top: 1px solid var(--border);
+  background: rgba(162,89,255,0.04);
+  flex-wrap: wrap;
+}
+.repeat-day-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.13s, border-color 0.13s, color 0.13s;
+  flex-shrink: 0;
+}
+.repeat-day-btn.active {
+  background: var(--fig-purple);
+  border-color: var(--fig-purple);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(162,89,255,0.25);
+}
+.repeat-day-btn:active { transform: scale(0.92); }
+.repeat-indicator {
+  font-size: 10px; color: var(--fig-purple); margin-left: 2px;
+  display: flex; align-items: center; gap: 3px; white-space: nowrap;
+}
+.icon-btn.repeat-btn.has-repeat { color: var(--fig-purple); }
+.list { padding: 6px 10px 12px; display: flex; flex-direction: column; gap: 3px; min-height: 60px; }
+.task-block {
+  border-radius: var(--radius-l); overflow: hidden;
+  background: var(--surface-raised); border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+.task-block.picked-card { border-color: rgba(162,89,255,0.5); box-shadow: 0 0 0 1px rgba(162,89,255,0.2); }
+/* Backlog picked card uses Figma blue instead of purple */
+.backlog-list .task-block.picked-card { border-color: rgba(26,188,254,0.6); box-shadow: 0 0 0 1px rgba(26,188,254,0.25), inset 0 0 20px rgba(26,188,254,0.05); }
+
+/* ── Swipe to delete ── */
+.swipe-wrap {
+  position: relative;
+}
+.swipe-delete-bg {
+  position: absolute; right: 0; top: 0; height: 52px;
+  width: 80px;
+  background: var(--fig-red);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 12px; font-weight: 600;
+  gap: 4px; flex-direction: column;
+  opacity: 0; transition: opacity 0.15s;
+  pointer-events: none;
+  border-radius: 0 var(--radius-l) var(--radius-l) 0;
+}
+.swipe-delete-bg svg { flex-shrink: 0; }
+.swipe-content {
+  position: relative; z-index: 1;
+  background: var(--surface-raised);
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+/* Delete btn: always visible on desktop, hidden on mobile (swipe reveals it) */
+.delete-row-btn {
+  width: 34px; height: 34px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); flex-shrink: 0; transition: background 0.13s, color 0.13s;
+}
+.delete-row-btn:hover { color: var(--fig-red); }
+.delete-row-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
+@media (hover: none) and (pointer: coarse) {
+  .delete-row-btn { display: none; }
+  .delete-row-btn.always-visible { display: flex; }
+}
+.item {
+  display: flex; align-items: flex-start;
+  padding: 10px 8px 10px 12px; min-height: 52px; cursor: pointer; gap: 10px;
+  transition: background 0.13s; border-radius: var(--radius-l) var(--radius-l) 0 0;
+  -webkit-user-select: none; user-select: none;
+}
+.item.no-subs { border-radius: var(--radius-l); }
+.item:active { background: var(--surface-hover); }
+.checkbox {
+  width: 18px; height: 18px; border: 1.5px solid var(--text-disabled);
+  border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, background 0.18s; position: relative;
+}
+.item.done .checkbox { border-color: var(--fig-green); background: var(--fig-green); }
+.checkmark { position: absolute; width: 10px; height: 10px; opacity: 0; transition: opacity 0.15s; }
+.item.done .checkmark { opacity: 1; }
+.item-num {
+  min-width: 22px; height: 20px; border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.07); color: var(--text-secondary);
+  font-size: 11px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; padding: 0 6px; transition: all 0.2s;
+}
+.item.done .item-num { display: none; }
+.item-num-picked { background: rgba(162,89,255,0.2) !important; font-size: 13px !important; }
+
+/* ── Drag handle ── */
+.drag-handle {
+  width: 20px; height: 34px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); cursor: grab; opacity: 0;
+  transition: opacity 0.13s;
+  touch-action: none;
+}
+.drag-handle:active { cursor: grabbing; }
+.item:hover .drag-handle { opacity: 1; }
+.item.done .drag-handle { display: none; }
+
+/* ── Drag states ── */
+.task-block.dragging {
+  opacity: 0.4;
+  box-shadow: none !important;
+}
+.task-block.drag-over-above {
+  border-top: 2px solid var(--fig-purple);
+  margin-top: -2px;
+}
+.task-block.drag-over-below {
+  border-bottom: 2px solid var(--fig-purple);
+}
+
+/* ── Backlog section ── */
+.backlog-section {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.backlog-header {
+  padding: 10px 14px 6px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.backlog-header-left { display: flex; align-items: center; gap: 8px; }
+.backlog-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-disabled);
+}
+.backlog-count {
+  font-size: 10px; font-weight: 500;
+  color: var(--text-disabled);
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+}
+.backlog-actions { display: flex; align-items: center; gap: 6px; }
+.backlog-pick-btn {
+  background: rgba(26,188,254,0.12); color: var(--fig-blue);
+  border: 1px solid rgba(26,188,254,0.3); border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+  padding: 5px 10px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.backlog-pick-btn:active { background: rgba(26,188,254,0.22); }
+.backlog-pick-btn:disabled { opacity: 0.35; cursor: default; }
+.backlog-add-btn {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.08); color: var(--text-secondary);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-full);
+  font-size: 18px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.13s, color 0.13s;
+}
+.backlog-add-btn:active { background: rgba(255,255,255,0.15); color: var(--text-primary); }
+.backlog-add-row {
+  padding: 6px 10px 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.backlog-add-field {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-input); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full); padding: 0 6px 0 16px; height: 44px;
+  flex: 1; transition: border-color 0.15s;
+}
+.backlog-add-field:focus-within { border-color: var(--fig-blue); box-shadow: 0 0 0 2px rgba(26,188,254,0.15); }
+.backlog-add-input {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 16px; color: var(--text-primary); outline: none;
+}
+.backlog-add-input::placeholder { color: var(--text-disabled); }
+.backlog-submit-btn {
+  width: 32px; height: 32px; background: var(--fig-blue); color: #000;
+  border: none; border-radius: var(--radius-full); font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  line-height: 1; padding-bottom: 1px; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(26,188,254,0.35);
+}
+.backlog-submit-btn:active { transform: scale(0.93); }
+.backlog-list { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 3px; }
+.backlog-empty {
+  padding: 16px 14px; font-size: 12px; color: var(--text-disabled);
+  text-align: center; font-style: italic;
+}
+/* drop zone highlight when dragging over backlog */
+.backlog-list.drop-active {
+  background: rgba(26,188,254,0.05);
+  border-radius: var(--radius-l);
+  outline: 2px dashed rgba(26,188,254,0.3);
+  outline-offset: 2px;
+}
+.active-list.drop-active {
+  background: rgba(162,89,255,0.05);
+  border-radius: var(--radius-l);
+  outline: 2px dashed rgba(162,89,255,0.3);
+  outline-offset: 2px;
+}
+/* Backlog pick banner */
+.backlog-banner-wrap { padding: 0 10px 8px; }
+.backlog-pick-banner {
+  background: linear-gradient(135deg, rgba(26,188,254,0.15), rgba(10,207,131,0.1));
+  border: 1px solid rgba(26,188,254,0.3); border-radius: var(--radius-l);
+  padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+  animation: bannerIn 0.2s ease;
+}
+.backlog-banner-icon {
+  width: 30px; height: 30px; border-radius: var(--radius-s);
+  background: linear-gradient(135deg, var(--fig-blue), var(--fig-green));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.backlog-banner-label { font-size: 9px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--fig-blue); margin-bottom: 1px; }
+.backlog-banner-text { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.backlog-banner-dismiss { background: none; border: none; cursor: pointer; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; flex-shrink: 0; }
+/* Backlog task blocks get a subtle blue tint */
+.backlog-list .task-block { border-color: rgba(26,188,254,0.12); }
+.backlog-list .task-block:hover { border-color: rgba(26,188,254,0.28); }
+.item-body { flex: 1; min-width: 0; }
+.item-text {
+  font-size: 14px; color: var(--text-primary); position: relative;
+  white-space: normal; overflow: visible; text-overflow: unset;
+  display: block; transition: color 0.22s; word-break: break-word;
+}
+.item.done .item-text { color: var(--text-disabled); }
+.item-sub-hint { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+.progress-row { height: 2px; background: rgba(255,255,255,0.07); margin: 0 12px 8px; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--fig-purple), var(--fig-blue)); transition: width 0.35s ease; border-radius: 2px; }
+.strikethrough { position: absolute; left: 0; right: 100%; top: 50%; height: 1.5px; background: var(--text-disabled); transition: right 0.3s ease; border-radius: 1px; }
+.item.done .strikethrough { right: 0; }
+.picked-star { font-size: 13px; flex-shrink: 0; }
+.expand-btn {
+  flex-shrink: 0; width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); transition: transform 0.2s;
+}
+.expand-btn.open { transform: rotate(180deg); }
+.expand-btn.add-sub-chevron { color: var(--text-disabled); opacity: 1; }
+.expand-btn.add-sub-chevron:hover { color: var(--fig-green); }
+.expand-btn.add-sub-chevron:active { background: rgba(10,207,131,0.12); color: var(--fig-green); }
+.icon-btn {
+  width: 34px; height: 34px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); flex-shrink: 0; transition: background 0.13s, color 0.13s;
+}
+.icon-btn:active { background: rgba(255,255,255,0.08); }
+.icon-btn.delete-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
+.icon-btn.add-sub-btn:active { background: rgba(10,207,131,0.12); color: var(--fig-green); }
+.icon-btn.task-action-btn { color: var(--text-disabled); }
+.icon-btn.task-action-btn:hover { color: var(--text-secondary); }
+.icon-btn.task-action-btn.repeat-active { color: var(--fig-purple); }
+.subtasks { overflow: hidden; transition: max-height 0.28s ease; background: rgba(0,0,0,0.15); border-top: 1px solid var(--border); }
+.subtasks-inner { padding: 4px 8px 6px 12px; display: flex; flex-direction: column; gap: 1px; }
+.subitem {
+  display: flex; align-items: flex-start; padding: 8px 6px 8px 32px;
+  min-height: 38px; border-radius: var(--radius-s); cursor: pointer; gap: 10px;
+  position: relative; transition: background 0.13s;
+  -webkit-user-select: none; user-select: none;
+}
+.subitem::before { content: ''; position: absolute; left: 14px; top: 50%; width: 12px; height: 1px; background: rgba(255,255,255,0.12); }
+.subitem:active { background: rgba(255,255,255,0.05); }
+.sub-checkbox {
+  width: 14px; height: 14px; border: 1.5px solid var(--text-disabled); border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, background 0.18s; position: relative;
+}
+.subitem.done .sub-checkbox { background: var(--fig-green); border-color: var(--fig-green); }
+
+/* Subtask drag handle */
+.sub-drag-handle {
+  width: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); cursor: grab; opacity: 0;
+  transition: opacity 0.13s; touch-action: none;
+  margin-left: -4px; align-self: center;
+}
+.sub-drag-handle:active { cursor: grabbing; }
+.subitem:hover .sub-drag-handle { opacity: 1; }
+.subitem.sub-dragging { opacity: 0.35; }
+.subitem.sub-drag-over-above { border-top: 2px solid var(--fig-purple); margin-top: -2px; }
+.subitem.sub-drag-over-below { border-bottom: 2px solid var(--fig-purple); }
+.sub-checkmark { position: absolute; width: 8px; height: 8px; opacity: 0; transition: opacity 0.15s; }
+.subitem.done .sub-checkmark { opacity: 1; }
+.subitem-text { flex: 1; font-size: 13px; color: var(--text-secondary); position: relative; white-space: normal; overflow: visible; text-overflow: unset; transition: color 0.22s; word-break: break-word; }
+.subitem.done .subitem-text { color: var(--text-disabled); }
+.subitem .strikethrough { background: var(--text-disabled); }
+.sub-icon-btn {
+  width: 26px; height: 26px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); flex-shrink: 0;
+}
+.sub-icon-btn:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
+.sub-add-row {
+  display: flex; align-items: center; gap: 6px;
+  margin: 3px 0 3px 32px; background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-s); padding: 4px 8px;
+}
+.sub-add-input { flex: 1; border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 16px; color: var(--text-primary); outline: none; padding: 3px 0; }
+.sub-add-input::placeholder { color: var(--text-disabled); }
+.sub-add-confirm { width: 26px; height: 26px; border: none; background: var(--fig-green); color: #000; border-radius: var(--radius-s); cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sub-add-cancel { width: 26px; height: 26px; border: none; background: rgba(255,255,255,0.07); color: var(--text-secondary); border-radius: var(--radius-s); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Add subtask trigger at bottom of expanded subtask list */
+.sub-add-trigger {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px 6px 32px;
+  font-size: 12px; color: var(--text-disabled);
+  cursor: pointer; border-radius: var(--radius-s);
+  transition: color 0.13s, background 0.13s;
+  -webkit-user-select: none; user-select: none;
+}
+.sub-add-trigger:hover { color: var(--fig-green); }
+.sub-add-trigger:active { background: rgba(10,207,131,0.08); color: var(--fig-green); }
+.empty { padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.empty-icon { font-size: 36px; }
+.empty-text { font-size: 15px; color: var(--text-secondary); font-weight: 500; }
+.empty-sub { font-size: 12px; color: var(--text-disabled); }
+.footer { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); background: var(--surface-raised); }
+.footer-count { font-size: 12px; color: var(--text-secondary); }
+.footer-count strong { color: var(--fig-green); font-weight: 600; }
+.clear-btn { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--fig-red); background: rgba(242,78,30,0.1); border: 1px solid rgba(242,78,30,0.25); border-radius: var(--radius-full); cursor: pointer; padding: 5px 12px; }
+.clear-btn:active { background: rgba(242,78,30,0.22); }
+/* ── Inline edit ── */
+.edit-field {
+  flex: 1; min-width: 0;
+  background: var(--surface-input);
+  border: 1.5px solid var(--fig-purple);
+  border-radius: var(--radius-s);
+  padding: 4px 8px;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 0 0 2px rgba(162,89,255,0.2);
+}
+.edit-input {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 16px;
+  color: var(--text-primary); outline: none;
+}
+.sub-edit-input {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 16px;
+  color: var(--text-primary); outline: none;
+}
+.edit-confirm {
+  width: 24px; height: 24px; border: none; background: var(--fig-purple);
+  color: #fff; border-radius: var(--radius-s); cursor: pointer;
+  font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.edit-cancel {
+  width: 24px; height: 24px; border: none; background: rgba(255,255,255,0.07);
+  color: var(--text-secondary); border-radius: var(--radius-s); cursor: pointer;
+  font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.icon-btn.edit-btn:active { background: rgba(162,89,255,0.15); color: var(--fig-purple); }
+
+/* ── ··· overflow menu ── */
+.overflow-menu-wrap { position: relative; flex-shrink: 0; }
+.overflow-btn {
+  width: 34px; height: 34px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); transition: background 0.13s, color 0.13s;
+  font-size: 16px; letter-spacing: 1px; font-weight: 700; padding-bottom: 4px;
+}
+.overflow-btn:active { background: rgba(255,255,255,0.08); }
+.overflow-popover {
+  position: absolute; right: 0; top: 38px; z-index: 200;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  min-width: 148px;
+  overflow: hidden;
+  animation: popIn 0.12s ease;
+}
+.overflow-popover.above { top: auto; bottom: 38px; }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.overflow-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  transition: background 0.1s;
+  border: none; background: none; width: 100%;
+  font-family: 'Inter', sans-serif; text-align: left;
+}
+.overflow-item:active { background: rgba(255,255,255,0.07); }
+.overflow-item svg { flex-shrink: 0; color: var(--text-secondary); }
+.overflow-item.repeat-active { color: var(--fig-purple); }
+.overflow-item.repeat-active svg { color: var(--fig-purple); }
+.overflow-item + .overflow-item { border-top: 1px solid var(--border); }
+
+/* ── Side drawer ── */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.55);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 101;
+  width: 280px; max-width: 80vw;
+  background: var(--surface-raised);
+  border-right: 1px solid var(--border-strong);
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.2,0,0,1);
+  padding-top: env(safe-area-inset-top);
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.drawer-title {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.drawer-close {
+  width: 28px; height: 28px; background: none; border: none;
+  color: var(--text-secondary); cursor: pointer; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: background 0.13s;
+}
+.drawer-close:active { background: rgba(255,255,255,0.08); }
+
+.drawer-lists { flex: 1; overflow-y: auto; padding: 8px 8px; }
+
+.drawer-list-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px; border-radius: var(--radius-m);
+  cursor: pointer; transition: background 0.13s;
+  position: relative;
+}
+.drawer-list-item:active { background: var(--surface-hover); }
+.drawer-list-item.active { background: var(--primary-dim); }
+
+.drawer-list-icon {
+  width: 32px; height: 32px; border-radius: var(--radius-s);
+  background: var(--fig-purple); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 14px;
+}
+.drawer-list-item.active .drawer-list-icon { box-shadow: 0 0 0 2px rgba(162,89,255,0.4); }
+
+.drawer-list-info { flex: 1; min-width: 0; }
+.drawer-list-name {
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.drawer-list-count { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+
+.drawer-list-delete {
+  width: 26px; height: 26px; background: none; border: none; cursor: pointer;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); font-size: 14px;
+  transition: background 0.13s, color 0.13s; flex-shrink: 0;
+}
+.drawer-list-delete:active { background: rgba(242,78,30,0.15); color: var(--fig-red); }
+
+/* Drawer drag handle */
+.drawer-drag-handle {
+  width: 20px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-disabled); cursor: grab; touch-action: none;
+  transition: color 0.13s;
+}
+.drawer-drag-handle:active { cursor: grabbing; }
+.drawer-list-item.list-dragging { opacity: 0.35; }
+.drawer-list-item.list-drag-over-above { border-top: 2px solid var(--fig-purple); }
+.drawer-list-item.list-drag-over-below { border-bottom: 2px solid var(--fig-purple); }
+
+.drawer-new-btn {
+  margin: 8px 8px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-m);
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 12px 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  width: calc(100% - 16px);
+}
+.drawer-new-btn:active { background: rgba(162,89,255,0.1); border-color: var(--fig-purple); color: var(--fig-purple); }
+
+/* ── Auth section (drawer footer) ── */
+.drawer-auth {
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.auth-signin-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: 'Inter', -apple-system, sans-serif;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.auth-signin-btn:active { background: rgba(162,89,255,0.1); border-color: var(--fig-purple); color: var(--fig-purple); }
+.auth-user-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px 2px;
+}
+.auth-email {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auth-signout-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-disabled);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-s);
+  font-family: 'Inter', -apple-system, sans-serif;
+  transition: color 0.15s, background 0.15s;
+}
+.auth-signout-btn:active { color: var(--fig-red); background: rgba(242,78,30,0.1); }
+.auth-delete-btn {
+  display: block;
+  width: 100%;
+  font-size: 11px;
+  color: var(--text-disabled);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 12px 6px;
+  border-radius: var(--radius-s);
+  font-family: 'Inter', -apple-system, sans-serif;
+  text-align: left;
+  transition: color 0.15s;
+}
+.auth-delete-btn:hover { color: var(--fig-red); }
+.auth-delete-btn:active { color: var(--fig-red); background: rgba(242,78,30,0.1); }
+.auth-sync-dot {
+  font-size: 11px;
+  color: var(--fig-green);
+  padding: 0 4px 6px;
+}
+
+/* ── Editable title ── */
+.title-wrap {
+  display: flex; align-items: center; gap: 4px; cursor: text;
+}
+.top-bar-title-input {
+  font-size: 16px; font-weight: 600; color: var(--text-primary);
+  letter-spacing: -0.2px; background: transparent; border: none; outline: none;
+  font-family: 'Inter', -apple-system, sans-serif;
+  padding: 0; margin: 0; width: 100%;
+  -webkit-appearance: none;
+}
+.top-bar-title-input:focus {
+  border-bottom: 1.5px solid var(--fig-purple);
+}
+
+/* Logo button (clickable) */
+.logo-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  display: flex; align-items: center; flex-shrink: 0;
+  border-radius: var(--radius-s);
+  transition: opacity 0.15s;
+}
+.logo-btn:active { opacity: 0.7; }
+
+/* ── Header action button (share / leave) ── */
+.header-action-btn {
+  background: none; border: none; cursor: pointer; padding: 6px;
+  border-radius: var(--radius-s); color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.13s, color 0.13s; flex-shrink: 0;
+}
+.header-action-btn:active { background: var(--surface-hover); color: var(--text-primary); }
+
+/* ── Modal overlay ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  z-index: 200; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ── Share modal (bottom sheet) ── */
+.share-modal {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+  width: 100%; max-width: 480px;
+  background: var(--surface-raised); border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border); z-index: 201;
+  padding: 0 0 env(safe-area-inset-bottom, 16px);
+  transition: transform 0.25s cubic-bezier(0.32,0.72,0,1);
+  max-height: 80vh; display: flex; flex-direction: column;
+}
+.share-modal.open { transform: translateX(-50%) translateY(0); }
+.share-modal-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--border-strong); margin: 12px auto 0; flex-shrink: 0;
+}
+.share-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px; flex-shrink: 0;
+}
+.share-modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.modal-close-btn {
+  background: none; border: none; cursor: pointer; font-size: 22px; line-height: 1;
+  color: var(--text-secondary); padding: 4px; border-radius: 50%;
+  transition: background 0.13s; width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close-btn:active { background: var(--surface-hover); }
+.share-modal-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+.share-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-disabled);
+  text-transform: uppercase; letter-spacing: 0.6px; margin: 16px 0 8px;
+}
+.share-link-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.share-link-input {
+  flex: 1; background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m); padding: 9px 12px;
+  color: var(--text-secondary); font-size: 12px;
+  font-family: 'Inter', sans-serif; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.share-copy-btn {
+  flex-shrink: 0; background: var(--fig-purple); border: none; cursor: pointer;
+  border-radius: var(--radius-m); padding: 9px 14px;
+  color: #fff; font-size: 13px; font-weight: 500;
+  font-family: 'Inter', sans-serif; transition: opacity 0.15s;
+}
+.share-copy-btn:active { opacity: 0.8; }
+.share-copy-btn.copied { background: var(--fig-green); }
+.share-regen-btn {
+  background: none; border: none; cursor: pointer; padding: 6px 0 0;
+  color: var(--text-disabled); font-size: 12px;
+  font-family: 'Inter', sans-serif; text-decoration: underline;
+  transition: color 0.13s;
+}
+.share-regen-btn:active { color: var(--text-secondary); }
+.share-member-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.share-member-row:last-child { border-bottom: none; }
+.share-member-email { flex: 1; font-size: 13px; color: var(--text-primary); }
+.share-member-remove {
+  flex-shrink: 0; background: none; border: none; cursor: pointer;
+  color: var(--text-disabled); font-size: 12px; padding: 4px 8px;
+  border-radius: var(--radius-s); font-family: 'Inter', sans-serif;
+  transition: color 0.13s, background 0.13s;
+}
+.share-member-remove:active { color: var(--fig-red); background: rgba(242,78,30,0.1); }
+.share-empty { font-size: 13px; color: var(--text-disabled); padding: 4px 0; }
+
+/* ── Join modal (centered) ── */
+.join-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.92);
+  width: calc(100% - 48px); max-width: 360px;
+  background: var(--surface-raised); border-radius: 20px;
+  border: 1px solid var(--border); z-index: 201;
+  padding: 28px 24px; opacity: 0; pointer-events: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.join-modal.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+.join-modal-title {
+  font-size: 17px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.join-modal-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+.join-modal-actions { display: flex; flex-direction: column; gap: 10px; }
+.join-accept-btn {
+  width: 100%; padding: 12px; background: var(--fig-purple);
+  border: none; border-radius: var(--radius-m); color: #fff;
+  font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.join-accept-btn:active { opacity: 0.85; }
+.join-dismiss-btn {
+  width: 100%; padding: 12px; background: none;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-m);
+  color: var(--text-secondary); font-size: 14px;
+  font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.13s;
+}
+.join-dismiss-btn:active { background: var(--surface-hover); }
+
+/* ── Delete account modal ── */
+.delete-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.92);
+  width: calc(100% - 48px); max-width: 360px;
+  background: var(--surface-raised); border-radius: 20px;
+  border: 1px solid var(--border); z-index: 201;
+  padding: 28px 24px; opacity: 0; pointer-events: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.delete-modal.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+.delete-modal-title { font-size: 17px; font-weight: 600; color: var(--fig-red); margin-bottom: 8px; }
+.delete-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; }
+.delete-modal-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.delete-modal-input {
+  width: 100%; box-sizing: border-box; display: block;
+  padding: 10px 12px; border-radius: var(--radius-m);
+  border: 1px solid var(--border-strong); background: var(--surface);
+  font-size: 13px; color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  margin-bottom: 20px; outline: none;
+}
+.delete-modal-input:focus { border-color: var(--fig-red); }
+.delete-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.delete-modal-cancel {
+  padding: 9px 16px; border-radius: var(--radius-m);
+  border: 1px solid var(--border-strong); background: transparent;
+  font-size: 13px; color: var(--text-secondary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  cursor: pointer; transition: background 0.13s;
+}
+.delete-modal-cancel:active { background: var(--surface-hover); }
+.delete-modal-confirm {
+  padding: 9px 16px; border-radius: var(--radius-m);
+  border: none; background: var(--fig-red);
+  font-size: 13px; color: #fff; font-weight: 500;
+  font-family: 'Inter', -apple-system, sans-serif;
+  cursor: pointer; transition: opacity 0.13s;
+}
+.delete-modal-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Drawer shared-list section ── */
+.drawer-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-disabled);
+  text-transform: uppercase; letter-spacing: 0.6px;
+  padding: 12px 12px 4px;
+}
+.drawer-list-item.shared-list .drawer-drag-handle { visibility: hidden; }
+</style>
+<script>
+(function() {
+  const svgSrc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="181.5 14.5 308 308" width="512" height="512">
+    <rect width="512" height="512" rx="112" fill="#1E1E1E"/>
+    <g transform="rotate(-6, 340, 210)">
+      <rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/>
+      <rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/>
+      <rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/>
+      <rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/>
+      <circle cx="278" cy="148" r="5" fill="white"/>
+      <line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="278" cy="175" r="5" fill="white"/>
+      <line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="278" cy="202" r="5" fill="white"/>
+      <line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="278" cy="229" r="5" fill="white"/>
+      <line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/>
+    </g>
+  </svg>`;
+  const blob = new Blob([svgSrc], {type: 'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, 512, 512);
+    URL.revokeObjectURL(url);
+    const png = canvas.toDataURL('image/png');
+    document.getElementById('app-icon-link').href = png;
+    document.getElementById('favicon-link').href = png;
+  };
+  img.src = url;
+})();
+</script>
+<script src="supabase.min.js"></script>
+</head>
+<body>
+<!-- Modals -->
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="share-modal" id="share-modal">
+  <div class="share-modal-handle"></div>
+  <div class="share-modal-header">
+    <span class="share-modal-title" id="share-modal-title">Share list</span>
+    <button class="modal-close-btn" onclick="closeShareModal()">×</button>
+  </div>
+  <div class="share-modal-body" id="share-modal-body"></div>
+</div>
+<div class="join-modal" id="join-modal">
+  <div class="join-modal-title" id="join-modal-title"></div>
+  <div class="join-modal-sub" id="join-modal-sub"></div>
+  <div class="join-modal-actions" id="join-modal-actions"></div>
+</div>
+<div class="delete-modal" id="delete-modal">
+  <div class="delete-modal-title">Delete account</div>
+  <div class="delete-modal-body">This will permanently delete your account and all your lists and tasks. This cannot be undone.</div>
+  <div class="delete-modal-label">Type DELETE to confirm</div>
+  <input class="delete-modal-input" id="delete-modal-input" type="text" placeholder="DELETE" oninput="onDeleteInput()" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="delete-modal-actions">
+    <button class="delete-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+    <button class="delete-modal-confirm" id="delete-modal-confirm" onclick="deleteAccount()" disabled>Delete everything</button>
+  </div>
+</div>
+
+<!-- Side drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">My Lists</span>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-lists" id="drawer-lists"></div>
+  <button class="drawer-new-btn" onclick="createNewList()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    New list
+  </button>
+  <div class="drawer-auth" id="drawer-auth"></div>
+</div>
+
+<div class="app">
+  <div class="card">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <!-- Clickable logo opens drawer -->
+        <button class="logo-btn" onclick="openDrawer()" title="My lists" aria-label="Open lists">
+          <svg class="logo-mark" viewBox="181.5 14.5 308 308" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g transform="rotate(-6, 340, 210)">
+              <rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/>
+              <rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/>
+              <rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/>
+              <rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/>
+              <circle cx="278" cy="148" r="5" fill="white"/>
+              <line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="278" cy="175" r="5" fill="white"/>
+              <line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="278" cy="202" r="5" fill="white"/>
+              <line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="278" cy="229" r="5" fill="white"/>
+              <line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </button>
+        <div style="min-width:0">
+          <div class="title-wrap">
+            <input class="top-bar-title-input" id="list-name-input" value="Tasks"
+              onchange="renameCurrentList(this.value)"
+              onkeydown="if(event.key==='Enter'||event.key==='Escape')this.blur()"
+              style="font-size:16px"/>
+          </div>
+          <div class="top-bar-sub" id="header-sub">0 active · 0 done</div>
+        </div>
+      </div>
+      <div id="list-header-actions"></div>
+    </div>
+
+    <div class="action-bar">
+      <button class="speed-btn" id="speed-btn" onclick="toggleSpeedPanel()">
+        <svg width="18" height="14" viewBox="0 0 36 20" fill="none" style="flex-shrink:0;transform:scaleX(-1)">
+          <path d="M2 13 C2 13 4 7 8 6 L14 4 C16 3.5 18 3 21 3 L27 3 C30 3 32 5 33 7 L34 10 C34 10 35 11 35 13 L35 14 L2 14 Z" fill="currentColor" opacity="0.9"/>
+          <path d="M15 4 L13 9 L26 9 L25 4 Z" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+          <path d="M1 13 L4 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M28 3 L28 1 L33 1 L33 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="15.5" r="3.5" fill="currentColor"/>
+          <circle cx="9" cy="15.5" r="1.5" fill="none" stroke="white" stroke-width="1"/>
+          <circle cx="27" cy="15.5" r="3.5" fill="currentColor"/>
+          <circle cx="27" cy="15.5" r="1.5" fill="none" stroke="white" stroke-width="1"/>
+        </svg>
+        <span>Speed round</span>
+      </button>
+      <button class="pick-btn" id="pick-btn" onclick="pickRandom()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <path d="M3 17 C7 17 9 7 21 7" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <polyline points="17 3 21 7 17 11" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 7 C7 7 9 17 21 17" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <polyline points="17 13 21 17 17 21" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Pick one</span>
+      </button>
+    </div>
+
+    <!-- Speed Round panel -->
+    <div class="speed-panel" id="speed-panel">
+      <div class="speed-panel-inner" ontouchstart="unlockAudio()" onclick="unlockAudio()">
+        <!-- Mute toggle -->
+        <button class="speed-mute-btn" id="mute-btn" onclick="toggleMute()" title="Toggle alarm sound" aria-label="Toggle alarm sound">
+          <svg id="mute-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+          </svg>
+        </button>
+        <div class="speed-label">⚡ Speed Round</div>
+        <div id="speed-display">
+          <div class="speed-timer" id="speed-timer">10:00</div>
+        </div>
+        <!-- Duration picker -->
+        <div class="duration-picker" id="duration-picker">
+          <button class="dur-btn" id="dur-5"  onclick="setDuration(5)"  >5 min</button>
+          <button class="dur-btn selected" id="dur-10" onclick="setDuration(10)">10 min</button>
+          <button class="dur-btn" id="dur-15" onclick="setDuration(15)" >15 min</button>
+          <div class="custom-dur-row">
+            <input class="custom-dur-input" id="custom-dur-input" type="number" min="1" max="99" placeholder="?"/>
+            <span class="custom-dur-label">min</span>
+            <button class="custom-dur-set" onclick="setCustomDuration()">Set</button>
+          </div>
+        </div>
+        <div class="speed-controls">
+          <button class="speed-go-btn" id="speed-go-btn" onclick="startSpeedRound()">▶ Go</button>
+          <button class="speed-pause-btn" id="speed-pause-btn" onclick="pauseSpeedRound()" style="display:none">
+            <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" style="flex-shrink:0"><rect x="0" y="0" width="4" height="14" rx="1.5"/><rect x="8" y="0" width="4" height="14" rx="1.5"/></svg>
+            <span id="pause-label">Pause</span>
+          </button>
+          <button class="speed-reset-btn" id="speed-reset-btn" onclick="resetSpeedRound()" style="display:none">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+              <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="3 3 3 8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="banner-wrap" style="display:none" class="banner-wrap">
+      <div class="pick-banner">
+        <div class="banner-icon">⭐</div>
+        <div class="banner-body" onclick="scrollToPicked()" style="cursor:pointer">
+          <div class="banner-label">Focus on this ↓</div>
+          <div class="banner-text" id="banner-text"></div>
+        </div>
+        <button class="pick-dismiss" onclick="dismissPick()" aria-label="Dismiss">×</button>
+      </div>
+    </div>
+
+    <div class="add-area">
+      <div class="add-field">
+        <input class="add-input" id="main-input" placeholder="Add a new task…" onkeydown="if(event.key==='Enter')addItem()"/>
+        <button class="add-btn" onclick="addItem()">+</button>
+      </div>
+    </div>
+
+    <div id="list-container" class="active-list"></div>
+
+    <div class="backlog-section">
+      <div class="backlog-header">
+        <div class="backlog-header-left">
+          <span class="backlog-title">Backlog</span>
+          <span class="backlog-count" id="backlog-count">0</span>
+        </div>
+        <div class="backlog-actions">
+          <button class="backlog-pick-btn" id="backlog-pick-btn" onclick="pickBacklog()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M3 17 C7 17 9 7 21 7" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round"/>
+              <polyline points="17 3 21 7 17 11" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 7 C7 7 9 17 21 17" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round"/>
+              <polyline points="17 13 21 17 17 21" stroke="#1ABCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Pick from backlog
+          </button>
+          <button class="backlog-add-btn" onclick="toggleBacklogAdd()" title="Add to backlog">+</button>
+        </div>
+      </div>
+      <div id="backlog-banner-wrap" style="display:none" class="backlog-banner-wrap">
+        <div class="backlog-pick-banner">
+          <div class="backlog-banner-icon">⭐</div>
+          <div style="flex:1;min-width:0;cursor:pointer" onclick="scrollToBacklogPicked()">
+            <div class="backlog-banner-label">Focus on this ↓</div>
+            <div class="backlog-banner-text" id="backlog-banner-text"></div>
+          </div>
+          <button class="backlog-banner-dismiss" onclick="dismissBacklogPick()">×</button>
+        </div>
+      </div>
+      <div id="backlog-add-row" class="backlog-add-row" style="display:none">
+        <div class="backlog-add-field">
+          <input class="backlog-add-input" id="backlog-input" placeholder="Add to backlog…" onkeydown="if(event.key==='Enter')addBacklogItem();if(event.key==='Escape')toggleBacklogAdd()"/>
+          <button class="backlog-submit-btn" onclick="addBacklogItem()">+</button>
+        </div>
+      </div>
+      <div class="backlog-list" id="backlog-list"></div>
+    </div>
+
+    <div id="completed-container"></div>
+
+    <div id="footer" style="display:none" class="footer">
+      <span class="footer-count"><strong id="done-count">0</strong> completed</span>
+      <button class="clear-btn" onclick="clearDone()">Clear completed</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const mkId = () => crypto.randomUUID();
+let items = [];
+let pickedId = null;
+let pickedBacklogId = null;
+let editingId = null;
+let editingSubId = null;
+let backlogItems = [];
+let backlogAddOpen = false;
+
+// ── Data layer (parallel to existing state — Step 1 of Supabase refactor) ──
+// dataItems / dataBacklog hold only persisted fields (no UI state).
+// uiState holds ephemeral UI flags, keyed by item id, never saved.
+let dataItems   = [];
+let dataBacklog = [];
+const uiState   = new Map();
+
+// ── Speed Round state ──────────────────────────────────────────────────────
+let speedOpen = false;
+let speedRunning = false;
+let speedSeconds = 600;
+let speedInterval = null;
+let speedCountingDown = false;
+let selectedDuration = 10;
+let alarmInterval = null;
+let audioCtx = null;
+let isMuted = false;
+// Tally
+let speedTallyTasks = 0;
+let speedTallySubtasks = 0;
+let speedTallyActive = false;
+// Deadline-based timing (immune to backgrounding drift)
+let speedEndTime = null;        // Date.now() ms when timer should reach 0
+let speedPauseRemaining = null; // ms remaining when paused
+let speedAlarmTimeout = null;   // setTimeout handle for end-of-round alarm
+
+function setDuration(minutes) {
+  if (speedRunning || speedCountingDown) return;
+  selectedDuration = minutes;
+  speedSeconds = minutes * 60;
+  // Update selected pill
+  [5, 10, 15].forEach(m => {
+    const b = document.getElementById(`dur-${m}`);
+    if (b) b.classList.toggle('selected', m === minutes);
+  });
+  // Clear custom input value and any inline style so it returns to its default appearance
+  const customInput = document.getElementById('custom-dur-input');
+  if (customInput) { customInput.value = ''; customInput.style.color = ''; customInput.setCustomValidity(''); }
+  // Update timer display
+  const t = document.getElementById('speed-timer');
+  if (t) { t.textContent = formatTime(speedSeconds); t.style.color = '#fff'; }
+}
+
+function setCustomDuration() {
+  if (speedRunning || speedCountingDown) return;
+  const input = document.getElementById('custom-dur-input');
+  const val = parseInt(input.value, 10);
+  if (!val || val < 1 || val > 99) {
+    input.setCustomValidity('Enter a number between 1 and 99');
+    input.reportValidity();
+    input.focus(); input.select();
+    return;
+  }
+  input.setCustomValidity('');
+  selectedDuration = val;
+  speedSeconds = val * 60;
+  // Deselect preset pills
+  [5, 10, 15].forEach(m => {
+    const b = document.getElementById(`dur-${m}`);
+    if (b) b.classList.remove('selected');
+  });
+  const t = document.getElementById('speed-timer');
+  if (t) { t.textContent = formatTime(speedSeconds); t.style.color = '#fff'; }
+  input.blur();
+}
+
+function toggleSpeedPanel() {
+  unlockAudio();
+  speedOpen = !speedOpen;
+  const panel = document.getElementById('speed-panel');
+  const btn = document.getElementById('speed-btn');
+  panel.classList.toggle('open', speedOpen);
+  btn.classList.toggle('active', speedOpen);
+  // Stop alarm if panel is closed while ringing
+  if (!speedOpen && alarmInterval) {
+    clearInterval(alarmInterval);
+    alarmInterval = null;
+  }
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+  const secs = (speedEndTime && speedRunning) ? Math.max(0, Math.ceil((speedEndTime - Date.now()) / 1000)) : speedSeconds;
+  const el = document.getElementById('speed-timer');
+  if (el) el.textContent = formatTime(secs);
+}
+
+// ── Audio ─────────────────────────────────────────────────────────────────
+function unlockAudio() {
+  try {
+    if (!audioCtx) {
+      // 'playback' category tells iOS to ignore the silent switch (like alarm/media apps)
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    // Play a silent buffer — forces iOS to fully unlock audio
+    const buf = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(0);
+  } catch(e) {}
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  const btn  = document.getElementById('mute-btn');
+  const icon = document.getElementById('mute-icon');
+  if (!btn || !icon) return;
+  btn.classList.toggle('muted', isMuted);
+  btn.title = isMuted ? 'Alarm is muted' : 'Toggle alarm sound';
+  if (isMuted) {
+    // Muted: speaker-off icon
+    icon.innerHTML = `<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>`;
+    // Stop any currently playing alarm
+    if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+  } else {
+    // Unmuted: speaker icon
+    icon.innerHTML = `<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>`;
+  }
+}
+
+function playAlarm() {
+  if (isMuted) return;
+  try {
+    // Always create a fresh context — iOS kills stale ones silently
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    }
+    // iOS suspends the context after inactivity — always resume first
+    const playNotes = () => {
+      const ctx = audioCtx;
+      const notes = [523.25, 659.25, 783.99];
+      const noteLength = 0.55;
+      const gap = 0.18;
+
+      notes.forEach((freq, i) => {
+        const startTime = ctx.currentTime + i * (noteLength + gap);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.45, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteLength);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(startTime); osc.stop(startTime + noteLength);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq * 2, startTime);
+        gain2.gain.setValueAtTime(0, startTime);
+        gain2.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
+        gain2.gain.exponentialRampToValueAtTime(0.001, startTime + noteLength * 0.7);
+        osc2.connect(gain2); gain2.connect(ctx.destination);
+        osc2.start(startTime); osc2.stop(startTime + noteLength);
+      });
+
+      const chordStart = ctx.currentTime + notes.length * (noteLength + gap);
+      notes.forEach(freq => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, chordStart);
+        gain.gain.setValueAtTime(0, chordStart);
+        gain.gain.linearRampToValueAtTime(0.2, chordStart + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, chordStart + 1.8);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(chordStart); osc.stop(chordStart + 1.8);
+      });
+    };
+
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(playNotes).catch(() => {});
+    } else {
+      playNotes();
+    }
+  } catch(e) {}
+}
+
+function startSpeedRound() {
+  if (speedCountingDown) return;
+  unlockAudio(); // Must be first — synchronous inside the tap gesture so iOS unlocks audio
+  speedCountingDown = true;
+
+  const display = document.getElementById('speed-display');
+  const goBtn = document.getElementById('speed-go-btn');
+  const pauseBtn = document.getElementById('speed-pause-btn');
+  const resetBtn = document.getElementById('speed-reset-btn');
+  goBtn.style.display = 'none';
+  const picker = document.getElementById('duration-picker');
+  if (picker) picker.style.display = 'none';
+
+  const steps = ['3', '2', '1', 'Go!'];
+  let i = 0;
+
+  function showStep() {
+    if (i >= steps.length) {
+      // Done counting — show the timer and start it
+      speedCountingDown = false;
+      speedRunning = true;
+      speedTallyTasks = 0;
+      speedTallySubtasks = 0;
+      speedTallyActive = true;
+      // Set absolute deadline from current remaining seconds
+      speedEndTime = Date.now() + speedSeconds * 1000;
+      display.innerHTML = `<div class="speed-timer" id="speed-timer">${formatTime(speedSeconds)}</div>`;
+      pauseBtn.style.display = '';
+      resetBtn.style.display = '';
+      speedInterval = setInterval(() => {
+        const remainingMs = speedEndTime - Date.now();
+        const remaining = Math.max(0, Math.ceil(remainingMs / 1000));
+        speedSeconds = remaining;
+        if (remainingMs <= 500) {
+          fireAlarm();
+          return;
+        }
+        updateTimerDisplay();
+      }, 250); // Poll 4× per second so we catch the exact moment promptly
+      return;
+    }
+    const step = steps[i];
+    const isGo = step === 'Go!';
+    display.innerHTML = `<div class="speed-countdown${isGo ? ' go' : ''}">${step}</div>`;
+    i++;
+    setTimeout(showStep, isGo ? 700 : 600);
+  }
+
+  showStep();
+}
+
+function fireAlarm() {
+  const banner = document.getElementById('audio-unlock-banner');
+  if (banner) banner.remove();
+  clearInterval(speedInterval);
+  speedRunning = false;
+  speedTallyActive = false;
+  speedEndTime = null;
+  const t = document.getElementById('speed-timer');
+  if (t) { t.textContent = '0:00'; t.style.color = '#0ACF83'; }
+  const pauseBtn = document.getElementById('speed-pause-btn');
+  const resetBtn = document.getElementById('speed-reset-btn');
+  if (pauseBtn) pauseBtn.style.display = 'none';
+
+  // Try to play — if context is suspended (backgrounded), show tap overlay
+  const tryPlay = () => {
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    }
+    if (audioCtx.state === 'suspended') {
+      // Can't play without user gesture — show tap overlay
+      showAlarmOverlay();
+      return;
+    }
+    playAlarm();
+    alarmInterval = setInterval(playAlarm, 4000);
+  };
+  tryPlay();
+
+  if (resetBtn) {
+    resetBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg><span>Dismiss</span>`;
+    resetBtn.style.display = '';
+    resetBtn.style.background = 'rgba(255,255,255,0.3)';
+    resetBtn.style.borderColor = 'rgba(255,255,255,0.7)';
+    resetBtn.onclick = resetSpeedRound;
+  }
+}
+
+function showAudioUnlockBanner() {
+  if (isMuted) return;
+  const existing = document.getElementById('audio-unlock-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'audio-unlock-banner';
+  banner.style.cssText = `
+    position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+    background:rgba(162,89,255,0.95);color:#fff;
+    font-family:'Inter',sans-serif;font-size:14px;font-weight:600;
+    padding:14px 28px;border-radius:24px;z-index:9998;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);cursor:pointer;
+    white-space:nowrap;-webkit-tap-highlight-color:transparent;
+  `;
+  banner.textContent = '🔔 Tap to enable alarm sound';
+  banner.addEventListener('click', () => {
+    // Create fresh context and play a real audible beep to unlock
+    try {
+      if (!audioCtx || audioCtx.state === 'closed') {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+      }
+      audioCtx.resume().then(() => {
+        // Play a completely silent tone — just enough to unlock iOS audio
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = 440;
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      });
+    } catch(e) {}
+    banner.remove();
+  });
+  document.body.appendChild(banner);
+  // No auto-dismiss — persists until tapped
+}
+
+function showAlarmOverlay() {
+  // Remove any existing overlay
+  const existing = document.getElementById('alarm-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'alarm-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(162,89,255,0.92);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;cursor:pointer;
+  `;
+  overlay.innerHTML = `
+    <div style="font-size:48px">⏰</div>
+    <div style="font-size:22px;font-weight:700;color:#fff">Time's up!</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.8)">Tap anywhere to hear alarm</div>
+  `;
+  overlay.addEventListener('click', () => {
+    unlockAudio();
+    overlay.remove();
+    playAlarm();
+    alarmInterval = setInterval(playAlarm, 4000);
+  });
+  document.body.appendChild(overlay);
+}
+
+function pauseSpeedRound() {
+  const pauseBtn = document.getElementById('speed-pause-btn');
+  const pauseLabel = document.getElementById('pause-label');
+  const pauseIcon = pauseBtn.querySelector('svg');
+  if (speedRunning) {
+    // Pausing — snapshot remaining ms, clear deadline
+    clearInterval(speedInterval);
+    speedRunning = false;
+    speedPauseRemaining = speedEndTime ? Math.max(0, speedEndTime - Date.now()) : speedSeconds * 1000;
+    speedEndTime = null;
+    speedSeconds = Math.ceil(speedPauseRemaining / 1000);
+    pauseIcon.innerHTML = '<polygon points="0,0 12,7 0,14" />';
+    pauseIcon.setAttribute('viewBox', '0 0 12 14');
+    if (pauseLabel) pauseLabel.textContent = 'Resume';
+  } else {
+    // Resuming — restore deadline from remaining ms
+    const remaining = speedPauseRemaining !== null ? speedPauseRemaining : speedSeconds * 1000;
+    speedEndTime = Date.now() + remaining;
+    speedPauseRemaining = null;
+    speedRunning = true;
+    if (pauseLabel) pauseLabel.textContent = 'Pause';
+    pauseIcon.innerHTML = '<rect x="0" y="0" width="4" height="14" rx="1.5"/><rect x="8" y="0" width="4" height="14" rx="1.5"/>';
+    pauseIcon.setAttribute('viewBox', '0 0 12 14');
+
+    // Schedule exact alarm at deadline — won't drift
+    // Clear any previously scheduled alarm before setting a new one
+    if (speedAlarmTimeout !== null) clearTimeout(speedAlarmTimeout);
+    speedAlarmTimeout = setTimeout(() => {
+      speedAlarmTimeout = null;
+      if (!speedRunning) return;
+      clearInterval(speedInterval);
+      fireAlarm();
+    }, remaining);
+
+    speedInterval = setInterval(() => {
+      const remainingMs = speedEndTime - Date.now();
+      if (remainingMs <= 0) return;
+      speedSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+      updateTimerDisplay();
+    }, 250);
+  }
+}
+
+function resetSpeedRound() {
+  const overlay = document.getElementById('alarm-overlay');
+  if (overlay) overlay.remove();
+  const banner = document.getElementById('audio-unlock-banner');
+  if (banner) banner.remove();
+  const wasAlarmRinging = !!alarmInterval;
+  clearInterval(speedInterval);
+  clearInterval(alarmInterval);
+  if (speedAlarmTimeout !== null) { clearTimeout(speedAlarmTimeout); speedAlarmTimeout = null; }
+  alarmInterval = null;
+  speedRunning = false;
+  speedTallyActive = false;
+  speedCountingDown = false;
+  speedEndTime = null;
+  speedPauseRemaining = null;
+
+  const display  = document.getElementById('speed-display');
+  const goBtn    = document.getElementById('speed-go-btn');
+  const pauseBtn = document.getElementById('speed-pause-btn');
+  const resetBtn = document.getElementById('speed-reset-btn');
+  const picker   = document.getElementById('duration-picker');
+
+  if (wasAlarmRinging) {
+    // Build stats section only if something was completed
+    const hasTally = speedTallyTasks > 0 || speedTallySubtasks > 0;
+    const taskLabel = speedTallyTasks    === 1 ? 'task'    : 'tasks';
+    const subLabel  = speedTallySubtasks === 1 ? 'subtask' : 'subtasks';
+    const statsHtml = hasTally ? `
+      <div class="speed-results-sub">Completed this round:</div>
+      <div class="speed-results-stats">
+        <div class="speed-stat">
+          <div class="speed-stat-num">${speedTallyTasks}</div>
+          <div class="speed-stat-label">${taskLabel}</div>
+        </div>
+        ${speedTallySubtasks > 0 ? `<div class="speed-stat">
+          <div class="speed-stat-num">${speedTallySubtasks}</div>
+          <div class="speed-stat-label">${subLabel}</div>
+        </div>` : ''}
+      </div>` : '';
+
+    display.innerHTML = `
+      <canvas id="confetti-canvas"></canvas>
+      <div class="speed-results">
+        <div class="speed-results-headline">🎉 You crushed it!</div>
+        ${statsHtml}
+      </div>`;
+
+    if (hasTally) launchConfetti();
+
+    goBtn.style.display = '';
+    goBtn.textContent = '↺ New round';
+    pauseBtn.style.display = 'none';
+    resetBtn.style.display = '';
+    resetBtn.innerHTML = 'Dismiss';
+    resetBtn.style.background = 'rgba(255,255,255,0.15)';
+    resetBtn.style.borderColor = 'rgba(255,255,255,0.3)';
+    if (picker) picker.style.display = 'none';
+    // Dismiss — go back to duration picker
+    resetBtn.onclick = () => {
+      stopConfetti();
+      speedSeconds = selectedDuration * 60;
+      display.innerHTML = `<div class="speed-timer" id="speed-timer">${formatTime(speedSeconds)}</div>`;
+      goBtn.textContent = '▶ Go';
+      goBtn.onclick = startSpeedRound;
+      pauseBtn.style.display = 'none';
+      resetBtn.style.display = 'none';
+      resetBtn.style.background = '';
+      resetBtn.style.borderColor = '';
+      resetBtn.onclick = resetSpeedRound;
+      if (picker) picker.style.display = '';
+    };
+    // New round — start immediately
+    goBtn.onclick = () => {
+      stopConfetti();
+      goBtn.textContent = '▶ Go';
+      goBtn.onclick = startSpeedRound;
+      speedSeconds = selectedDuration * 60;
+      display.innerHTML = `<div class="speed-timer" id="speed-timer">${formatTime(speedSeconds)}</div>`;
+      resetBtn.style.display = 'none';
+      resetBtn.style.background = '';
+      resetBtn.style.borderColor = '';
+      resetBtn.onclick = resetSpeedRound;
+      if (picker) picker.style.display = '';
+      startSpeedRound();
+    };
+  } else {
+    // Normal reset
+    speedSeconds = selectedDuration * 60;
+    display.innerHTML = `<div class="speed-timer" id="speed-timer">${formatTime(speedSeconds)}</div>`;
+    goBtn.textContent = '▶ Go';
+    goBtn.onclick = startSpeedRound;
+    goBtn.style.display = '';
+    pauseBtn.innerHTML = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" style="flex-shrink:0"><rect x="0" y="0" width="4" height="14" rx="1.5"/><rect x="8" y="0" width="4" height="14" rx="1.5"/></svg><span id="pause-label">Pause</span>';
+    pauseBtn.style.display = 'none';
+    resetBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="3 3 3 8 8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Reset</span>';
+    resetBtn.style.display = 'none';
+    resetBtn.style.background = '';
+    resetBtn.style.borderColor = '';
+    if (picker) picker.style.display = '';
+  }
+}
+
+const STORAGE_KEY     = 'figma-tasks-v1';
+const COUNTER_KEY        = 'figma-tasks-counter-v1'; // legacy — no longer written
+const UUID_MIGRATION_KEY = 'rt-uuid-v1';
+const LIST_ORDER_KEY     = 'rt-list-order-v1';
+const BACKLOG_KEY     = 'figma-tasks-backlog-v1';
+const LISTS_KEY       = 'figma-tasks-lists-v1';
+const ACTIVE_LIST_KEY = 'figma-tasks-active-list-v1';
+const MIGRATED_KEY    = 'rt-migrated-v1';
+const OWNER_KEY       = 'rt-owner-v1';
+
+// ── Supabase config ────────────────────────────────────────────────────────
+// Fill in your project URL and anon key from the Supabase dashboard.
+// Leave the placeholders as-is to run in pure localStorage mode (no cloud).
+//
+// SQL schema to run once in the Supabase SQL editor:
+//
+//   create table lists (
+//     id         bigint primary key,
+//     owner_id   uuid references auth.users not null,
+//     name       text not null default 'Tasks',
+//     created_at timestamptz default now()
+//   );
+//   alter table lists enable row level security;
+//   create policy "owner" on lists for all using (auth.uid() = owner_id);
+//
+//   create table items (
+//     id           bigint primary key,
+//     list_id      bigint references lists on delete cascade not null,
+//     text         text not null default '',
+//     done         boolean not null default false,
+//     section      text not null default 'active',
+//     position     float not null default 0,
+//     repeat_days  jsonb not null default '[]',
+//     completed_at timestamptz,
+//     created_at   timestamptz default now()
+//   );
+//   alter table items enable row level security;
+//   create policy "owner" on items for all using (
+//     exists (select 1 from lists where lists.id = items.list_id and lists.owner_id = auth.uid())
+//   );
+//
+//   create table subtasks (
+//     id        bigint primary key,
+//     item_id   bigint references items on delete cascade not null,
+//     text      text not null default '',
+//     done      boolean not null default false,
+//     position  float not null default 0
+//   );
+//   alter table subtasks enable row level security;
+//   create policy "owner" on subtasks for all using (
+//     exists (
+//       select 1 from items join lists on lists.id = items.list_id
+//       where items.id = subtasks.item_id and lists.owner_id = auth.uid()
+//     )
+//   );
+//
+//   -- Enable Google provider in: Supabase dashboard → Auth → Providers → Google
+//   -- Add your app URL to: Auth → URL Configuration → Redirect URLs
+//
+// Edge Function for account deletion (deploy once via Supabase dashboard → Edge Functions → New function → name: "delete-account"):
+//
+//   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+//   const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type' }
+//   Deno.serve(async (req) => {
+//     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+//     const authHeader = req.headers.get('Authorization')
+//     if (!authHeader) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+//     const admin = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+//     const { data: { user }, error } = await admin.auth.getUser(authHeader.replace('Bearer ', ''))
+//     if (error || !user) return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+//     const { error: delErr } = await admin.auth.admin.deleteUser(user.id)
+//     if (delErr) return new Response(delErr.message, { status: 500, headers: corsHeaders })
+//     return new Response('ok', { headers: corsHeaders })
+//   })
+//
+const SUPABASE_URL  = 'https://gxuwdaaiieevibpjygig.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_9b-VNXLQWi1VFPUL4SnvPA_BVVoj-Dq';
+
+// Initialise Supabase client only when real credentials are present.
+// While the placeholders are in place the app runs in localStorage-only mode.
+const sbConfigured = !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON.includes('YOUR_');
+let sb = null;
+if (sbConfigured) {
+  try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); }
+  catch(e) { console.warn('[Supabase] SDK not loaded:', e); }
+}
+let supabaseUser  = null;
+let supabaseToken = null;   // JWT access token used for direct REST calls
+let sbSaveTimer   = null;
+let authPending   = false;
+let realtimeChannel   = null;
+let realtimeReloadTimer = null;
+
+// Direct fetch wrapper for Supabase PostgREST — bypasses SDK for DB calls
+// so the new sb_publishable_ key format doesn't break the query pipeline.
+async function sbRest(path, { method = 'GET', body, prefer } = {}) {
+  if (!supabaseToken) throw new Error('Not authenticated');
+  const headers = {
+    'apikey':        SUPABASE_ANON,
+    'Authorization': `Bearer ${supabaseToken}`,
+    'Content-Type':  'application/json',
+  };
+  if (prefer) headers['Prefer'] = prefer;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers,
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  if (!text) return null;
+  const json = JSON.parse(text);
+  if (!res.ok) throw new Error(json.message || json.error || `HTTP ${res.status}`);
+  return json;
+}
+
+// ── Auth helpers ───────────────────────────────────────────────────────────
+function updateAuthUI() {
+  const el = document.getElementById('drawer-auth');
+  if (!el) return;
+  if (!sb) { el.innerHTML = ''; return; }
+  if (supabaseUser) {
+    el.innerHTML =
+      `<div class="auth-user-row">
+         <span class="auth-email">${esc(supabaseUser.email || 'Signed in')}</span>
+         <button class="auth-signout-btn" onclick="signOut()">Sign out</button>
+       </div>
+       <button class="auth-delete-btn" onclick="openDeleteModal()">Delete account &amp; data…</button>`;
+  } else if (authPending) {
+    el.innerHTML = `<div class="auth-sync-dot">Signing in…</div>`;
+  } else {
+    el.innerHTML =
+      `<button class="auth-signin-btn" onclick="signIn()">Sign in to sync &amp; share</button>`;
+  }
+  updateHeaderActions();
+}
+
+function subscribeRealtime() {
+  if (!sb || !supabaseUser || realtimeChannel) return;
+  realtimeChannel = sb.channel('db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'items' },        onRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' },     onRemoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'list_members' }, onRemoteChange)
+    .subscribe();
+}
+
+function onRemoteChange() {
+  clearTimeout(realtimeReloadTimer);
+  realtimeReloadTimer = setTimeout(async () => {
+    if (!supabaseUser || sbSaveTimer || editingId || editingSubId) return;
+    await loadFromSupabase();
+  }, 600);
+}
+
+function unsubscribeRealtime() {
+  if (realtimeChannel) {
+    sb.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+}
+
+async function signIn() {
+  if (!sb) return;
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo, queryParams: { prompt: 'select_account' } },
+  });
+  if (error) console.warn('[Auth] sign-in error:', error);
+}
+
+function handleNewSignIn(user) {
+  const storedOwner = localStorage.getItem(OWNER_KEY);
+  if (storedOwner && storedOwner !== user.id) {
+    clearLocalData();
+    localStorage.removeItem(MIGRATED_KEY); // different user — let their data migrate fresh
+  }
+  localStorage.setItem(OWNER_KEY, user.id);
+}
+
+function clearLocalData() {
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+  activeListId = lists[0].id;
+  localStorage.removeItem(LISTS_KEY);
+  localStorage.removeItem(ACTIVE_LIST_KEY);
+  localStorage.removeItem(COUNTER_KEY);
+  localStorage.removeItem(OWNER_KEY);
+  // MIGRATED_KEY intentionally not cleared here — only cleared on user switch
+  // so a returning user doesn't re-migrate and overwrite their cloud data
+  uiState.clear();
+  syncFromList();
+  render();
+}
+
+async function signOut() {
+  if (!sb) return;
+  if (sbSaveTimer && supabaseUser) {
+    clearTimeout(sbSaveTimer);
+    sbSaveTimer = null;
+    await saveToSupabase();
+  }
+  unsubscribeRealtime();
+  await sb.auth.signOut();
+  supabaseUser  = null;
+  supabaseToken = null;
+  clearLocalData();
+  updateAuthUI();
+}
+
+function openDeleteModal() {
+  if (!sb || !supabaseUser) return;
+  document.getElementById('delete-modal-input').value = '';
+  document.getElementById('delete-modal-confirm').disabled = true;
+  document.getElementById('delete-modal').classList.add('open');
+  openModal();
+  setTimeout(() => document.getElementById('delete-modal-input').focus(), 50);
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  closeModal();
+}
+
+function onDeleteInput() {
+  const val = document.getElementById('delete-modal-input').value;
+  document.getElementById('delete-modal-confirm').disabled = val !== 'DELETE';
+}
+
+async function deleteAccount() {
+  if (!sb || !supabaseUser) return;
+  closeDeleteModal();
+  try {
+    // Remove user from any shared lists they joined as editor
+    await sbRest(`list_members?user_id=eq.${supabaseUser.id}`, { method: 'DELETE' });
+    // Delete owned lists — FK cascades to items and subtasks
+    await sbRest(`lists?owner_id=eq.${supabaseUser.id}`, { method: 'DELETE' });
+    // Delete the auth.users record via edge function (client can't use the admin API directly)
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${supabaseToken}`, 'apikey': SUPABASE_ANON },
+    });
+    if (!res.ok) throw new Error(await res.text());
+  } catch(e) {
+    console.error('[deleteAccount]', e);
+    alert('Something went wrong. Please try again.');
+    return;
+  }
+  unsubscribeRealtime();
+  supabaseUser = null;
+  supabaseToken = null;
+  localStorage.clear();
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+  activeListId = lists[0].id;
+  save();
+  render();
+  updateAuthUI();
+}
+
+async function initAuth() {
+  if (!sb) return;
+
+  // Show "Signing in…" if page loaded from an OAuth redirect
+  authPending = window.location.hash.includes('access_token');
+  updateAuthUI();
+
+  // Wire listener before getSession so it catches the OAuth hash exchange
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    const wasLoggedIn = !!supabaseUser;
+    supabaseUser  = session?.user         ?? null;
+    supabaseToken = session?.access_token ?? null;
+    authPending = false;
+    updateAuthUI();
+    if (supabaseUser && !wasLoggedIn) {
+      handleNewSignIn(supabaseUser);
+      const pendingJoin = localStorage.getItem('rt-pending-join');
+      if (pendingJoin) {
+        localStorage.removeItem('rt-pending-join');
+        pendingJoinToken = pendingJoin;
+      }
+      await migrateToSupabase(supabaseUser);
+      await loadFromSupabase();
+      if (pendingJoinToken) await acceptJoin();
+    }
+  });
+
+  // Resolves existing session (or processes the OAuth hash on redirect)
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user && !supabaseUser) {
+    supabaseUser  = session.user;
+    supabaseToken = session.access_token;
+    authPending = false;
+    updateAuthUI();
+    handleNewSignIn(supabaseUser);
+    await migrateToSupabase(supabaseUser);
+    await loadFromSupabase();
+    const pendingJoin = localStorage.getItem('rt-pending-join');
+    if (pendingJoin) {
+      localStorage.removeItem('rt-pending-join');
+      pendingJoinToken = pendingJoin;
+    }
+    if (pendingJoinToken) await acceptJoin();
+  }
+}
+
+// ── Cloud persistence ──────────────────────────────────────────────────────
+
+// One-time upload of all localStorage data to Supabase on first login.
+// Gated by MIGRATED_KEY so it never runs again after the first success.
+// Does NOT set the flag on partial failure so it retries on next login.
+async function migrateToSupabase(user) {
+  if (localStorage.getItem(MIGRATED_KEY) === '1') return;
+  console.log('[Migration] Starting localStorage → Supabase…');
+  syncToList();
+  try {
+    const ownedLists = lists.filter(l => !l.role || l.role === 'owner');
+    // UUIDs are generated client-side so we include them directly — no collision risk
+    await sbRest('lists', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates,return=minimal',
+      body:   ownedLists.map(l => ({ id: l.id, owner_id: user.id, name: l.name })),
+    });
+
+    const itemsPayload    = [];
+    const subtasksPayload = [];
+    for (const list of ownedLists) {
+      const newListId = list.id;
+      const rows = [
+        ...(list.items        || []).map((it, idx) => ({ it, section: 'active',  pos: idx })),
+        ...(list.backlogItems || []).map((it, idx) => ({ it, section: 'backlog', pos: idx })),
+      ];
+      for (const { it, section, pos } of rows) {
+        itemsPayload.push({
+          id: it.id, list_id: newListId, text: it.text, done: it.done,
+          section, position: pos, repeat_days: it.repeat ?? [],
+          completed_at: it.completedAt ? new Date(it.completedAt).toISOString() : null,
+        });
+        (it.subtasks || []).forEach((sub, si) =>
+          subtasksPayload.push({ id: sub.id, item_id: it.id, text: sub.text, done: sub.done, position: si })
+        );
+      }
+    }
+    if (itemsPayload.length)    await sbRest('items',    { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: itemsPayload });
+    if (subtasksPayload.length) await sbRest('subtasks', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: subtasksPayload });
+
+    localStorage.setItem(MIGRATED_KEY, '1');
+    console.log('[Migration] Complete.');
+  } catch(e) {
+    console.warn('[Migration] Failed — will retry on next login:', e);
+  }
+}
+
+// Replaces local state with authoritative cloud state after login.
+// Also persists merged state back to localStorage for offline resilience.
+async function loadFromSupabase() {
+  if (!supabaseUser) return;
+  try {
+    // Load all lists this user can see (RLS filters to owned + shared)
+    const cloudLists = await sbRest(
+      `lists?select=id,name,share_token,owner_id&order=id`
+    );
+
+    // Find which lists this user is an editor on (not owner)
+    // Gracefully handles the case where list_members table doesn't exist yet
+    let sharedIds = new Set();
+    try {
+      const memberRows = await sbRest(`list_members?user_id=eq.${supabaseUser.id}&role=eq.editor&select=list_id`) || [];
+      memberRows.forEach(r => sharedIds.add(r.list_id));
+    } catch(e) { /* sharing not configured yet — all visible lists treated as owned */ }
+
+    // Find which owned lists have at least one editor member (i.e. have been shared and joined)
+    let ownerSharedIds = new Set();
+    try {
+      const ownedIds = (cloudLists || []).filter(cl => cl.owner_id === supabaseUser.id).map(cl => cl.id);
+      if (ownedIds.length) {
+        const memberRows = await sbRest(`list_members?list_id=in.(${ownedIds.join(',')})&role=eq.editor&select=list_id`) || [];
+        memberRows.forEach(r => ownerSharedIds.add(r.list_id));
+      }
+    } catch(e) {}
+
+    if (!cloudLists || !cloudLists.length) {
+      clearLocalData();
+    } else {
+      const listIds    = cloudLists.map(l => l.id).join(',');
+      const cloudItems = await sbRest(
+        `items?select=*,subtasks(*)&list_id=in.(${listIds})&order=position`
+      );
+
+      lists = cloudLists.map(cl => {
+        const li   = (cloudItems || []).filter(i => i.list_id === cl.id);
+        const role = cl.owner_id === supabaseUser.id ? 'owner' : 'editor';
+        return {
+          id: cl.id, name: cl.name,
+          share_token: role === 'owner' ? (cl.share_token || null) : null,
+          shared: role === 'owner' ? ownerSharedIds.has(cl.id) : false,
+          role,
+          items:        li.filter(i => i.section === 'active').map(cloudItemToLocal),
+          backlogItems: li.filter(i => i.section === 'backlog').map(cloudItemToLocal),
+        };
+      });
+
+      if (_bootActiveListId && lists.find(l => l.id === _bootActiveListId)) {
+        activeListId = _bootActiveListId;
+      } else if (!lists.find(l => l.id === activeListId)) {
+        activeListId = lists[0].id;
+      }
+      _bootActiveListId = null;
+
+      const ownedLists = lists.filter(l => l.role === 'owner');
+      localStorage.setItem(LISTS_KEY, JSON.stringify(ownedLists));
+      localStorage.setItem(ACTIVE_LIST_KEY, String(activeListId));
+
+      const nameInput = document.getElementById('list-name-input');
+      if (nameInput) {
+        nameInput.value = currentList().name;
+        nameInput.readOnly = currentList().role === 'editor';
+      }
+
+      // Restore user-defined list order if one exists
+      const savedOrder = localStorage.getItem(LIST_ORDER_KEY);
+      if (savedOrder) {
+        try {
+          const order = JSON.parse(savedOrder);
+          if (Array.isArray(order)) {
+            lists.sort((a, b) => {
+              const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+              if (ai === -1 && bi === -1) return 0;
+              if (ai === -1) return 1;
+              if (bi === -1) return -1;
+              return ai - bi;
+            });
+          }
+        } catch(e) {}
+      }
+
+      syncFromList();
+      render();
+      renderDrawer();
+      updateHeaderActions();
+    }
+  } catch(e) {
+    console.warn('[Supabase] load failed:', e);
+  }
+  subscribeRealtime();
+}
+
+function cloudItemToLocal(ci) {
+  return {
+    id:          ci.id,
+    text:        ci.text,
+    done:        ci.done,
+    completedAt: ci.completed_at ? new Date(ci.completed_at).getTime() : null,
+    repeat:      ci.repeat_days || [],
+    position:    ci.position,
+    subtasks:    (ci.subtasks || [])
+      .sort((a, b) => a.position - b.position)
+      .map(s => ({ id: s.id, text: s.text, done: s.done })),
+  };
+}
+
+// Debounced — coalesces rapid saves (typing, toggling) into one round-trip.
+function scheduleSbSave() {
+  if (!supabaseUser) return;
+  clearTimeout(sbSaveTimer);
+  sbSaveTimer = setTimeout(saveToSupabase, 1500);
+}
+
+async function saveToSupabase() {
+  sbSaveTimer = null;
+  if (!supabaseUser) return;
+  syncToList();
+
+  const ownedLists = lists.filter(l => !l.role || l.role === 'owner');
+  if (ownedLists.length) {
+    await sbRest('lists', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates,return=minimal',
+      body:   ownedLists.map(l => ({ id: l.id, owner_id: supabaseUser.id, name: l.name })),
+    }).catch(e => console.warn('[Supabase] lists save failed:', e.message || e));
+  }
+
+  const itemsPayload    = [];
+  const subtasksPayload = [];
+  for (const list of lists) {
+    const rows = [
+      ...(list.items        || []).map((it, idx) => ({ it, section: 'active',  pos: idx })),
+      ...(list.backlogItems || []).map((it, idx) => ({ it, section: 'backlog', pos: idx })),
+    ];
+    for (const { it, section, pos } of rows) {
+      itemsPayload.push({
+        id: it.id, list_id: list.id, text: it.text, done: it.done,
+        section, position: pos, repeat_days: it.repeat ?? [],
+        completed_at: it.completedAt ? new Date(it.completedAt).toISOString() : null,
+      });
+      (it.subtasks || []).forEach((sub, si) =>
+        subtasksPayload.push({ id: sub.id, item_id: it.id, text: sub.text, done: sub.done, position: si })
+      );
+    }
+  }
+  if (itemsPayload.length)
+    await sbRest('items', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: itemsPayload })
+      .catch(e => console.warn('[Supabase] items save failed:', e.message || e));
+  if (subtasksPayload.length)
+    await sbRest('subtasks', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: subtasksPayload })
+      .catch(e => console.warn('[Supabase] subtasks save failed:', e.message || e));
+
+  // Delete items/subtasks that no longer exist locally
+  for (const list of lists) {
+    const keptIds = itemsPayload.filter(i => i.list_id === list.id).map(i => i.id);
+    const q = keptIds.length
+      ? `items?list_id=eq.${list.id}&id=not.in.(${keptIds.join(',')})`
+      : `items?list_id=eq.${list.id}`;
+    await sbRest(q, { method: 'DELETE' })
+      .catch(e => console.warn('[Supabase] items delete sync failed:', e.message || e));
+  }
+  const keptItemIds = itemsPayload.map(i => i.id);
+  if (keptItemIds.length) {
+    const keepSubIds = subtasksPayload.map(s => s.id);
+    const sq = keepSubIds.length
+      ? `subtasks?item_id=in.(${keptItemIds.join(',')})&id=not.in.(${keepSubIds.join(',')})`
+      : `subtasks?item_id=in.(${keptItemIds.join(',')})`;
+    await sbRest(sq, { method: 'DELETE' })
+      .catch(e => console.warn('[Supabase] subtasks delete sync failed:', e.message || e));
+  }
+}
+
+// ── Share panel ────────────────────────────────────────────────────────────
+
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+async function openShareModal() {
+  const list = currentList();
+  if (!list || !supabaseUser) return;
+  document.getElementById('share-modal-title').textContent = 'Share "' + list.name + '"';
+  document.getElementById('share-modal-body').innerHTML = '<div class="share-empty">Loading…</div>';
+  document.getElementById('share-modal').classList.add('open');
+  openModal();
+  // Idempotently add owner to list_members and ensure token exists
+  try {
+    const token = await sbRest('rpc/generate_share_token', {
+      method: 'POST', body: { p_list_id: list.id, p_force_new: false },
+    });
+    if (token) list.share_token = token;
+  } catch(e) { console.warn('[Share] setup failed:', e); }
+  await refreshShareModal();
+}
+
+function closeShareModal() {
+  document.getElementById('share-modal').classList.remove('open');
+  closeModal();
+}
+
+async function refreshShareModal() {
+  const list = currentList();
+  if (!list) return;
+
+  let token = list.share_token;
+  let members = [];
+  try {
+    const rows = await sbRest('rpc/get_list_members', { method: 'POST', body: { p_list_id: list.id } });
+    members = rows || [];
+  } catch(e) { console.warn('[Share] load members failed:', e); }
+
+  const link = token
+    ? `${window.location.origin}${window.location.pathname}?join=${token}`
+    : null;
+
+  document.getElementById('share-modal-body').innerHTML = `
+    <div class="share-section-label">Invite link</div>
+    ${link
+      ? `<div class="share-link-row">
+           <div class="share-link-input" id="share-link-display">${esc(link)}</div>
+           <button class="share-copy-btn" id="share-copy-btn" onclick="copyShareLink()">Copy</button>
+         </div>
+         <button class="share-regen-btn" onclick="regenShareToken()">Generate new link</button>`
+      : `<button class="share-copy-btn" style="width:100%;margin-top:4px" onclick="regenShareToken()">Generate invite link</button>`
+    }
+    <div class="share-section-label" style="margin-top:20px">Who has access</div>
+    ${members.length
+      ? members.map(m => `
+          <div class="share-member-row">
+            <span class="share-member-email">${esc(m.email || 'Unknown')}</span>
+            <button class="share-member-remove" onclick="removeMember('${m.user_id}')">Remove</button>
+          </div>`).join('')
+      : '<div class="share-empty">No one else has access yet.</div>'
+    }`;
+}
+
+function copyShareLink() {
+  const list = currentList();
+  if (!list || !list.share_token) return;
+  const link = `${window.location.origin}${window.location.pathname}?join=${list.share_token}`;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('share-copy-btn');
+    if (!btn) return;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+async function regenShareToken() {
+  const list = currentList();
+  if (!list || list.role === 'editor') return;
+  try {
+    const token = await sbRest('rpc/generate_share_token', {
+      method: 'POST', body: { p_list_id: list.id, p_force_new: true },
+    });
+    list.share_token = token;
+    await refreshShareModal();
+  } catch(e) { console.warn('[Share] generate token failed:', e); }
+}
+
+async function removeMember(userId) {
+  const list = currentList();
+  if (!list) return;
+  try {
+    await sbRest('rpc/remove_list_member', { method: 'POST', body: { p_list_id: list.id, p_user_id: userId } });
+    await refreshShareModal();
+  } catch(e) { console.warn('[Share] remove member failed:', e); }
+}
+
+async function leaveSharedList() {
+  const list = currentList();
+  if (!list || list.role !== 'editor') return;
+  if (!confirm(`Leave "${list.name}"? You'll lose access to this list.`)) return;
+  try {
+    await sbRest(`list_members?list_id=eq.${list.id}&user_id=eq.${supabaseUser.id}`, { method: 'DELETE' });
+    lists = lists.filter(l => l.id !== list.id);
+    activeListId = lists[0]?.id ?? null;
+    if (activeListId) {
+      syncFromList();
+      const nameInput = document.getElementById('list-name-input');
+      if (nameInput) nameInput.value = currentList().name;
+    }
+    render();
+    renderBacklog();
+    renderDrawer();
+    updateHeaderActions();
+  } catch(e) { console.warn('[Share] leave list failed:', e); }
+}
+
+// ── Join modal ──────────────────────────────────────────────────────────────
+
+let pendingJoinToken = null;
+
+async function checkJoinParam() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('join');
+  if (!token) return;
+  pendingJoinToken = token;
+
+  // Strip the param from the URL without reloading
+  const clean = window.location.pathname;
+  history.replaceState(null, '', clean);
+
+  // Look up list name (works without auth)
+  let listName = 'this list';
+  try {
+    const rows = await fetch(`${SUPABASE_URL}/rest/v1/rpc/lookup_share_token`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_ANON, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_token: token }),
+    }).then(r => r.json());
+    if (rows && rows.length) listName = rows[0].name;
+  } catch(e) { /* show modal anyway */ }
+
+  if (supabaseUser && pendingJoinToken) {
+    await acceptJoin();
+  } else if (pendingJoinToken) {
+    showJoinModal(pendingJoinToken, listName);
+  }
+}
+
+function showJoinModal(token, listName) {
+  const titleEl   = document.getElementById('join-modal-title');
+  const subEl     = document.getElementById('join-modal-sub');
+  const actionsEl = document.getElementById('join-modal-actions');
+
+  if (supabaseUser) {
+    titleEl.textContent   = `Join "${listName}"?`;
+    subEl.textContent     = "You'll be added as an editor and can collaborate on this list.";
+    actionsEl.innerHTML   = `
+      <button class="join-accept-btn" onclick="acceptJoin()">Yes, join</button>
+      <button class="join-dismiss-btn" onclick="dismissJoin()">No, dismiss</button>`;
+  } else {
+    titleEl.textContent   = `Join "${listName}"`;
+    subEl.textContent     = 'Sign in with Google to join this shared list.';
+    actionsEl.innerHTML   = `
+      <button class="join-accept-btn" onclick="signInToJoin()">Sign in with Google</button>
+      <button class="join-dismiss-btn" onclick="dismissJoin()">Dismiss</button>`;
+  }
+
+  document.getElementById('join-modal').classList.add('open');
+  openModal();
+}
+
+function dismissJoin() {
+  pendingJoinToken = null;
+  document.getElementById('join-modal').classList.remove('open');
+  closeModal();
+}
+
+async function signInToJoin() {
+  if (pendingJoinToken) localStorage.setItem('rt-pending-join', pendingJoinToken);
+  dismissJoin();
+  await signIn();
+}
+
+async function acceptJoin() {
+  if (!pendingJoinToken || !supabaseUser) return;
+  const token = pendingJoinToken;
+  dismissJoin();
+  try {
+    const result = await sbRest('rpc/join_shared_list', {
+      method: 'POST', body: { p_token: token },
+    });
+    if (result && result.error) {
+      console.warn('[Join] error:', result.error);
+      return;
+    }
+    await loadFromSupabase();
+    if (result) switchList(result);
+  } catch(e) { console.warn('[Join] failed:', e); }
+}
+
+// ── Header action button ────────────────────────────────────────────────────
+
+function updateHeaderActions() {
+  const el = document.getElementById('list-header-actions');
+  if (!el) return;
+  if (!supabaseUser) { el.innerHTML = ''; return; }
+  const list = currentList();
+  if (!list) { el.innerHTML = ''; return; }
+
+  if (!list.role || list.role === 'owner') {
+    el.innerHTML = `<button class="header-action-btn" onclick="openShareModal()" title="Share list" aria-label="Share list">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>`;
+  } else {
+    el.innerHTML = `<button class="header-action-btn" onclick="leaveSharedList()" title="Leave list" aria-label="Leave shared list">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>`;
+  }
+}
+
+// ── Multi-list state ───────────────────────────────────────────────────────
+let lists = [];
+let activeListId = null;
+let _bootActiveListId = null; // saved once at boot before any save() can overwrite it
+
+function currentList() { return lists.find(l => l.id === activeListId) || lists[0]; }
+
+function migrateLocalIdsToUUIDs() {
+  if (localStorage.getItem(UUID_MIGRATION_KEY) === '1') return;
+  const raw = localStorage.getItem(LISTS_KEY);
+  if (raw) {
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch(e) { parsed = null; }
+    if (Array.isArray(parsed) && parsed.length && typeof parsed[0].id === 'number') {
+      const idMap = {};
+      const convertItem = it => {
+        const newId = crypto.randomUUID();
+        idMap[it.id] = newId;
+        return {
+          ...it, id: newId,
+          subtasks: (it.subtasks || []).map(s => ({ ...s, id: crypto.randomUUID() })),
+        };
+      };
+      const converted = parsed.map(l => {
+        const newId = crypto.randomUUID();
+        idMap[l.id] = newId;
+        return {
+          ...l, id: newId,
+          items:        (l.items        || []).map(convertItem),
+          backlogItems: (l.backlogItems || []).map(convertItem),
+        };
+      });
+      localStorage.setItem(LISTS_KEY, JSON.stringify(converted));
+      const savedActive = localStorage.getItem(ACTIVE_LIST_KEY);
+      const oldActive = savedActive ? parseInt(savedActive, 10) : NaN;
+      if (!isNaN(oldActive) && idMap[oldActive]) localStorage.setItem(ACTIVE_LIST_KEY, idMap[oldActive]);
+      localStorage.removeItem(MIGRATED_KEY);
+      console.log('[UUID Migration] Converted integer IDs to UUIDs and cleared migration flag.');
+    }
+  }
+  localStorage.setItem(UUID_MIGRATION_KEY, '1');
+}
+
+function save() {
+  syncToList();
+  const ownedLists = lists.filter(l => !l.role || l.role === 'owner');
+  localStorage.setItem(LISTS_KEY, JSON.stringify(ownedLists));
+  localStorage.setItem(ACTIVE_LIST_KEY, String(activeListId));
+  scheduleSbSave();
+}
+
+function load() {
+  try {
+    const savedLists = localStorage.getItem(LISTS_KEY);
+    const savedActiveId = localStorage.getItem(ACTIVE_LIST_KEY);
+    _bootActiveListId = safeId(savedActiveId); // capture before any save() can overwrite
+
+    if (savedLists) {
+      const parsed = JSON.parse(savedLists);
+      lists = validateLists(parsed) || [];
+    }
+
+    if (!lists || lists.length === 0) {
+      lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+    }
+
+    activeListId = savedActiveId ? (safeId(savedActiveId) ?? lists[0].id) : lists[0].id;
+    if (!lists.find(l => l.id === activeListId)) activeListId = lists[0].id;
+  } catch(e) {
+    lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+    activeListId = lists[0].id;
+  }
+
+  // Sync working variables from current list
+  syncFromList();
+}
+
+function syncFromList() {
+  const cl = currentList();
+  items        = cl.items || [];
+  backlogItems = cl.backlogItems || [];
+  pickedId         = null;
+  pickedBacklogId  = null;
+  editingId        = null;
+  editingSubId     = null;
+  backlogAddOpen   = false;
+  syncDataLayer();
+}
+
+function syncToList() {
+  const cl = currentList();
+  if (!cl) return;
+  cl.items        = items;
+  cl.backlogItems = backlogItems;
+}
+
+// ── Data layer helpers ─────────────────────────────────────────────────────
+
+function toDataSubtask(raw) {
+  return {
+    id:       raw.id,
+    item_id:  raw.item_id ?? null,
+    text:     raw.text    ?? '',
+    done:     raw.done    ?? false,
+    position: raw.position ?? 0,
+  };
+}
+
+// Converts the existing localStorage item shape to the canonical data shape.
+// Field renames: repeat → repeat_days, completedAt → completed_at.
+// UI fields (expanded, repeatOpen, addingSubtask, subInput) are stripped —
+// they live in uiState instead.
+function toDataItem(raw, section) {
+  return {
+    id:           raw.id,
+    list_id:      activeListId,
+    text:         raw.text          ?? '',
+    done:         raw.done          ?? false,
+    section:      section           ?? raw.section ?? 'active',
+    position:     raw.position      ?? 0,
+    repeat_days:  raw.repeat        ?? raw.repeat_days ?? [],
+    completed_at: raw.completedAt   ?? raw.completed_at ?? null,
+    subtasks:     (raw.subtasks     ?? []).map(toDataSubtask),
+  };
+}
+
+// Returns the UI state entry for an item, initialising defaults on first access.
+function getUI(id) {
+  if (!uiState.has(id)) {
+    uiState.set(id, { expanded: false, repeatOpen: false, addingSubtask: false, subInput: '' });
+  }
+  return uiState.get(id);
+}
+
+// Updates UI state and re-renders. Never triggers a save.
+function setUI(id, patch) {
+  uiState.set(id, { ...getUI(id), ...patch });
+  render();
+}
+
+// Removes stale uiState entries for items that no longer exist.
+function pruneUI() {
+  const live = new Set([...dataItems, ...dataBacklog].map(i => i.id));
+  for (const id of uiState.keys()) {
+    if (!live.has(id)) uiState.delete(id);
+  }
+}
+
+// Merges a DataItem with its uiState entry into the shape render functions expect.
+// Render functions consume this — they don't touch dataItems or uiState directly.
+function toViewModel(dataItem) {
+  const ui = getUI(dataItem.id);
+  return {
+    id:            dataItem.id,
+    text:          dataItem.text,
+    done:          dataItem.done,
+    section:       dataItem.section,
+    repeat:        dataItem.repeat_days,
+    completedAt:   dataItem.completed_at,
+    subtasks:      dataItem.subtasks,
+    expanded:      ui.expanded,
+    repeatOpen:    ui.repeatOpen,
+    addingSubtask: ui.addingSubtask,
+    subInput:      ui.subInput,
+  };
+}
+
+function getActiveViewModels()  { return dataItems.map(toViewModel); }
+function getBacklogViewModels() { return dataBacklog.map(toViewModel); }
+
+// Asserts that a view model produced by the new data layer matches the
+// original item from the existing layer. Logs a warning if anything diverges.
+// Remove this once the render functions are fully migrated to toViewModel().
+function assertViewModelMatch(original, vm) {
+  if (!vm) { console.warn('[DataLayer] no view model for item', original.id); return; }
+  const checks = [
+    ['text',        original.text,                          vm.text],
+    ['done',        original.done,                          vm.done],
+    ['completedAt', original.completedAt   ?? null,         vm.completedAt],
+    ['repeat',      JSON.stringify(original.repeat ?? []),  JSON.stringify(vm.repeat ?? [])],
+  ];
+  for (const [field, a, b] of checks) {
+    if (a !== b) {
+      console.warn(`[DataLayer] mismatch on "${field}" for item ${original.id}:`, a, '≠', b);
+    }
+  }
+}
+
+// Fast sync — rebuilds dataItems / dataBacklog from items / backlogItems.
+// Initialises uiState for items that are new (not yet tracked); existing
+// entries are left untouched so setUI() writes survive across renders.
+function rebuildDataLayer() {
+  dataItems = items.map(it => {
+    if (!uiState.has(it.id)) {
+      uiState.set(it.id, { expanded: false, repeatOpen: false, addingSubtask: false, subInput: '' });
+    }
+    return toDataItem(it, 'active');
+  });
+  dataBacklog = backlogItems.map(it => {
+    if (!uiState.has(it.id)) {
+      uiState.set(it.id, { expanded: false, repeatOpen: false, addingSubtask: false, subInput: '' });
+    }
+    return toDataItem(it, 'backlog');
+  });
+  pruneUI();
+}
+
+// Called from syncFromList() on list load / list switch.
+// Runs the full rebuild plus assertions to verify the data layer matches originals.
+function syncDataLayer() {
+  rebuildDataLayer();
+  items.forEach(original => {
+    const data = dataItems.find(d => d.id === original.id);
+    assertViewModelMatch(original, data ? toViewModel(data) : null);
+  });
+  backlogItems.forEach(original => {
+    const data = dataBacklog.find(d => d.id === original.id);
+    assertViewModelMatch(original, data ? toViewModel(data) : null);
+  });
+}
+
+function switchList(id) {
+  syncToList();
+  save();
+  activeListId = id;
+  localStorage.setItem(ACTIVE_LIST_KEY, String(id));
+  syncFromList();
+  const nameInput = document.getElementById('list-name-input');
+  if (nameInput) {
+    nameInput.value = currentList().name;
+    nameInput.readOnly = currentList().role === 'editor';
+  }
+  closeDrawer();
+  render();
+  renderBacklog();
+  updateHeaderActions();
+}
+
+function createNewList() {
+  syncToList();
+  const newList = { id: mkId(), name: 'New List', items: [], backlogItems: [], role: 'owner' };
+  lists.push(newList);
+  activeListId = newList.id;
+  syncFromList();
+  save();
+  closeDrawer();
+  render();
+  renderBacklog();
+  // Focus the title to rename immediately
+  setTimeout(() => {
+    const input = document.getElementById('list-name-input');
+    if (input) { input.value = 'New List'; input.focus(); input.select(); }
+  }, 60);
+}
+
+function renameCurrentList(name) {
+  const cl = currentList();
+  if (!cl || cl.role === 'editor') return;
+  cl.name = name.trim() || 'Untitled';
+  save();
+  renderDrawer();
+}
+
+async function deleteList(id) {
+  const list = lists.find(l => l.id === id);
+  if (!list || list.role === 'editor') return;
+  const ownedLists = lists.filter(l => !l.role || l.role === 'owner');
+  if (ownedLists.length <= 1) return;
+  lists = lists.filter(l => l.id !== id);
+  if (activeListId === id) {
+    activeListId = lists[0].id;
+    syncFromList();
+    const nameInput = document.getElementById('list-name-input');
+    if (nameInput) nameInput.value = currentList().name;
+    render();
+    renderBacklog();
+  }
+  save();
+  renderDrawer();
+  if (supabaseUser) {
+    try { await sbRest(`lists?id=eq.${id}`, { method: 'DELETE' }); }
+    catch(e) { console.warn('[Supabase] delete list failed:', e); }
+  }
+}
+
+// ── Drawer ─────────────────────────────────────────────────────────────────
+function openDrawer() {
+  syncToList(); // make sure counts are fresh
+  renderDrawer();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function renderDrawerListItem(list) {
+  const active   = (list.items || []).filter(i => !i.done).length;
+  const isActive = list.id === activeListId;
+  const isOwner  = !list.role || list.role === 'owner';
+  const ownedCount = lists.filter(l => !l.role || l.role === 'owner').length;
+  const canDelete  = isOwner && ownedCount > 1;
+  const listIconSvg = `<svg width="14" height="14" viewBox="0 0 28 28" fill="none">
+    <rect x="3" y="4" width="9" height="9" rx="2" fill="rgba(255,255,255,0.3)"/>
+    <polyline points="4.2,8.5 6,10.5 9.5,6.5" stroke="#0ACF83" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="16" y="6" width="9" height="2" rx="1" fill="rgba(255,255,255,0.6)"/>
+    <rect x="3" y="16" width="9" height="9" rx="2" fill="rgba(255,255,255,0.3)"/>
+    <polyline points="4.2,20.5 6,22.5 9.5,18.5" stroke="#0ACF83" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="16" y="18" width="7" height="2" rx="1" fill="rgba(255,255,255,0.4)"/>
+  </svg>`;
+  return `
+    <div class="drawer-list-item${isActive ? ' active' : ''}${isOwner ? '' : ' shared-list'}"
+         data-list-id="${list.id}" ${isOwner ? 'draggable="true"' : ''}
+         onclick="switchList('${list.id}')">
+      <div class="drawer-drag-handle" onclick="event.stopPropagation()"
+           ${isOwner ? `ontouchstart="listDragTouchStart(event,'${list.id}')"` : ''}>
+        <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
+          <circle cx="3" cy="2" r="1.5"/><circle cx="7" cy="2" r="1.5"/>
+          <circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/>
+          <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
+        </svg>
+      </div>
+      <div class="drawer-list-icon">${listIconSvg}</div>
+      <div class="drawer-list-info">
+        <div class="drawer-list-name">${esc(list.name)}</div>
+        <div class="drawer-list-count">${active} active</div>
+      </div>
+      ${canDelete ? `<button class="drawer-list-delete" onclick="event.stopPropagation();deleteList('${list.id}')" aria-label="Delete list">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>` : ''}
+    </div>`;
+}
+
+function renderDrawer() {
+  const container = document.getElementById('drawer-lists');
+  if (!container) return;
+  const myLists     = lists.filter(l => (l.role === 'owner' || !l.role) && !l.shared);
+  const sharedLists = lists.filter(l => l.role === 'editor' || (l.role === 'owner' && l.shared));
+  let html = myLists.map(renderDrawerListItem).join('');
+  if (sharedLists.length) {
+    html += `<div class="drawer-section-label">Shared lists</div>`;
+    html += sharedLists.map(renderDrawerListItem).join('');
+  }
+  container.innerHTML = html;
+  initListDragListeners();
+}
+
+// ── Drawer list drag-to-reorder ────────────────────────────────────────────
+let listDragSrcId = null;
+
+function initListDragListeners() {
+  const container = document.getElementById('drawer-lists');
+  if (!container) return;
+
+  container.addEventListener('dragstart', e => {
+    const item = e.target.closest('.drawer-list-item[draggable="true"]');
+    if (!item) return;
+    listDragSrcId = safeId(item.dataset.listId);
+    if (listDragSrcId === null) return;
+    item.classList.add('list-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  container.addEventListener('dragend', () => {
+    listDragSrcId = null;
+    container.querySelectorAll('.drawer-list-item').forEach(el =>
+      el.classList.remove('list-dragging', 'list-drag-over-above', 'list-drag-over-below')
+    );
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    const item = e.target.closest('.drawer-list-item[draggable="true"]');
+    container.querySelectorAll('.drawer-list-item').forEach(el =>
+      el.classList.remove('list-drag-over-above', 'list-drag-over-below')
+    );
+    if (!listDragSrcId) return;
+    if (!item || safeId(item.dataset.listId) === listDragSrcId) {
+      // Cursor is in container padding or over the dragged item itself.
+      // If above the first non-source item, show insert-before indicator on it.
+      const first = container.querySelector('.drawer-list-item[draggable="true"]');
+      if (first && safeId(first.dataset.listId) !== listDragSrcId &&
+          e.clientY < first.getBoundingClientRect().bottom) {
+        first.classList.add('list-drag-over-above');
+      }
+      return;
+    }
+    const rect = item.getBoundingClientRect();
+    item.classList.add(e.clientY < rect.top + rect.height / 2 ? 'list-drag-over-above' : 'list-drag-over-below');
+  });
+
+  container.addEventListener('dragleave', e => {
+    const item = e.target.closest('.drawer-list-item');
+    if (item && !item.contains(e.relatedTarget))
+      item.classList.remove('list-drag-over-above', 'list-drag-over-below');
+  });
+
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!listDragSrcId) return;
+    const item = e.target.closest('.drawer-list-item[draggable="true"]');
+    if (!item || safeId(item.dataset.listId) === listDragSrcId) {
+      // Cursor in container padding or over source — insert before first item if above it.
+      const first = container.querySelector('.drawer-list-item[draggable="true"]');
+      const firstId = first ? safeId(first.dataset.listId) : null;
+      if (firstId !== null && firstId !== listDragSrcId &&
+          e.clientY < first.getBoundingClientRect().bottom) {
+        reorderLists(listDragSrcId, firstId, true);
+      }
+      return;
+    }
+    const targetId = safeId(item.dataset.listId);
+    if (targetId === null) return;
+    const rect = item.getBoundingClientRect();
+    reorderLists(listDragSrcId, targetId, e.clientY < rect.top + rect.height / 2);
+  });
+}
+
+// ── List touch drag ────────────────────────────────────────────────────────
+let listTouchSrcId  = null;
+let listTouchClone  = null;
+let listTouchOffY   = 0;
+
+function listDragTouchStart(e, id) {
+  if (e.touches.length !== 1) return;
+  if (listTouchSrcId !== null) return;
+  e.stopPropagation();
+  listTouchSrcId = id;
+  const item = e.target.closest('.drawer-list-item');
+  if (!item) return;
+  const rect = item.getBoundingClientRect();
+  listTouchOffY = e.touches[0].clientY - rect.top;
+  listTouchClone = item.cloneNode(true);
+  listTouchClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;pointer-events:none;opacity:0.85;box-shadow:0 4px 20px rgba(0,0,0,0.5);border-radius:10px;transition:none;background:var(--surface-hover);`;
+  document.body.appendChild(listTouchClone);
+  item.classList.add('list-dragging');
+  document.addEventListener('touchmove', onListTouchMove, { passive: false });
+  document.addEventListener('touchend',  onListTouchEnd,  { once: true });
+}
+
+function onListTouchMove(e) {
+  if (!listTouchClone) return;
+  e.preventDefault();
+  const y = e.touches[0].clientY;
+  const x = e.touches[0].clientX;
+  listTouchClone.style.top = (y - listTouchOffY) + 'px';
+  const container = document.getElementById('drawer-lists');
+  if (!container) return;
+  container.querySelectorAll('.drawer-list-item').forEach(el =>
+    el.classList.remove('list-drag-over-above', 'list-drag-over-below')
+  );
+  const el = document.elementFromPoint(x, y);
+  if (!el) return;
+  const target = el.closest('.drawer-list-item[draggable="true"]');
+  if (!target || safeId(target.dataset.listId) === listTouchSrcId) {
+    // Touch is in container padding or over the source item — show insert-before
+    // indicator on the first non-source item if the touch is above it.
+    const first = container.querySelector('.drawer-list-item[draggable="true"]');
+    if (first && safeId(first.dataset.listId) !== listTouchSrcId &&
+        y < first.getBoundingClientRect().bottom) {
+      first.classList.add('list-drag-over-above');
+    }
+    return;
+  }
+  const rect = target.getBoundingClientRect();
+  target.classList.add(y < rect.top + rect.height / 2 ? 'list-drag-over-above' : 'list-drag-over-below');
+}
+
+function onListTouchEnd(e) {
+  document.removeEventListener('touchmove', onListTouchMove);
+  if (listTouchClone) { listTouchClone.remove(); listTouchClone = null; }
+  const container = document.getElementById('drawer-lists');
+  if (container) {
+    container.querySelectorAll('.drawer-list-item').forEach(el =>
+      el.classList.remove('list-dragging', 'list-drag-over-above', 'list-drag-over-below')
+    );
+  }
+  const y = e.changedTouches[0].clientY;
+  const x = e.changedTouches[0].clientX;
+  const el = document.elementFromPoint(x, y);
+  const target = el?.closest('.drawer-list-item[draggable="true"]');
+  if (target && safeId(target.dataset.listId) !== listTouchSrcId) {
+    const targetId = safeId(target.dataset.listId);
+    const rect = target.getBoundingClientRect();
+    if (targetId !== null) reorderLists(listTouchSrcId, targetId, y < rect.top + rect.height / 2);
+  } else {
+    // Touch is in container padding or over the source — insert before the first
+    // non-source item if the touch is above it.
+    const first = container?.querySelector('.drawer-list-item[draggable="true"]');
+    const firstId = first ? safeId(first.dataset.listId) : null;
+    if (firstId !== null && firstId !== listTouchSrcId &&
+        y < first.getBoundingClientRect().bottom) {
+      reorderLists(listTouchSrcId, firstId, true);
+    }
+  }
+  listTouchSrcId = null;
+}
+
+function reorderLists(srcId, targetId, insertBefore) {
+  const srcIdx = lists.findIndex(l => l.id === srcId);
+  if (srcIdx === -1) return;
+  const [moved] = lists.splice(srcIdx, 1);
+  const tIdx = lists.findIndex(l => l.id === targetId);
+  if (tIdx === -1) { lists.push(moved); }
+  else lists.splice(insertBefore ? tIdx : tIdx + 1, 0, moved);
+  localStorage.setItem(LIST_ORDER_KEY, JSON.stringify(lists.map(l => l.id)));
+  save();
+  renderDrawer();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  syncToList();
+  rebuildDataLayer();
+  const vms    = getActiveViewModels();
+  const active = vms.filter(i => !i.done);
+  const done   = vms.filter(i => i.done);
+  const ordered = [...active, ...done];
+  document.getElementById('header-sub').textContent = `${active.length} active · ${done.length} done`;
+  const pickable = vms.filter(i => {
+    if (i.done) return false;
+    if (!i.subtasks || i.subtasks.length === 0) return true;
+    return i.subtasks.some(s => !s.done);
+  });
+  document.getElementById('pick-btn').disabled = pickable.length === 0;
+
+  // Pick banner
+  const pickedItem = vms.find(i => i.id === pickedId && !i.done);
+  const bw = document.getElementById('banner-wrap');
+  if (pickedItem) {
+    bw.style.display = '';
+    document.getElementById('banner-text').textContent = pickedItem.text;
+  } else {
+    bw.style.display = 'none';
+    if (!pickedItem) pickedId = null;
+  }
+
+  // Footer
+  const footer = document.getElementById('footer');
+  footer.style.display = done.length ? '' : 'none';
+  const dc = document.getElementById('done-count');
+  if (dc) dc.textContent = done.length;
+
+  // Number active items
+  const nums = {};
+  let n = 1;
+  ordered.forEach(it => { if (!it.done) nums[it.id] = n++; });
+
+  // List — active items only
+  const container = document.getElementById('list-container');
+  const completedContainer = document.getElementById('completed-container');
+  let html = '';
+  let completedHtml = '';
+
+  if (active.length === 0) {
+    html = `<div class="empty">
+      <div class="empty-icon">✦</div>
+      <div class="empty-text">Nothing to do</div>
+      <div class="empty-sub">Add a task above to get started</div>
+    </div>`;
+  } else {
+    html += `<div class="section-label">Active</div>`;
+  }
+
+  ordered.forEach((item, idx) => {
+    const totalSubs = item.subtasks.length;
+    const doneSubs  = item.subtasks.filter(s => s.done).length;
+    const hasSubs   = totalSubs > 0;
+    const pct       = hasSubs ? (doneSubs / totalSubs * 100) : 0;
+    const isPicked  = item.id === pickedId && !item.done;
+    const showSubs  = (hasSubs || item.addingSubtask) && item.expanded;
+    const isDone    = item.done;
+
+    const noSubsClass = (!hasSubs && !item.addingSubtask) ? ' no-subs' : '';
+    const pickedClass = isPicked ? ' picked-card' : '';
+
+    // Subtask rows
+    let subHtml = '';
+    if (hasSubs || item.addingSubtask) {
+      let subRows = '';
+      item.subtasks.forEach(sub => {
+        const isEditingSub = (editingId === item.id && editingSubId === sub.id);
+        const subTextHtml = isEditingSub
+          ? `<div class="edit-field" onclick="event.stopPropagation()" style="flex:1;min-width:0">
+               <input class="sub-edit-input" id="edit-sub-${item.id}-${sub.id}" value="${esc(sub.text)}"
+                 onkeydown="handleSubEditKey(event,${item.id},${sub.id})"/>
+               <button class="edit-confirm" onclick="event.stopPropagation();confirmSubEdit('${item.id}','${sub.id}')">✓</button>
+               <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
+             </div>`
+          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
+        const subEditBtn = !isEditingSub
+          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-disabled)">
+               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+             </button>` : '';
+        subRows += `
+          <div class="subitem${sub.done ? ' done' : ''}" data-sub-id="${sub.id}" data-parent-id="${item.id}" onclick="${isEditingSub ? '' : `toggleSub('${item.id}','${sub.id}')`}">
+            <div class="sub-drag-handle" ontouchstart="subDragTouchStart(event,'${item.id}','${sub.id}')" onmousedown="subDragMouseStart(event,'${item.id}','${sub.id}')">
+              <svg width="8" height="12" viewBox="0 0 10 16" fill="currentColor">
+                <circle cx="3" cy="2" r="1.5"/><circle cx="7" cy="2" r="1.5"/>
+                <circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/>
+                <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
+              </svg>
+            </div>
+            <div class="sub-checkbox">
+              <svg class="sub-checkmark" viewBox="0 0 8 8" fill="none">
+                <polyline points="1,4 3,6.5 7,1.5" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            ${subTextHtml}
+            ${subEditBtn}
+            <button class="sub-icon-btn" onclick="event.stopPropagation();deleteSub('${item.id}','${sub.id}')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>`;
+      });
+      if (item.addingSubtask) {
+        subRows += `
+          <div class="sub-add-row" onclick="event.stopPropagation()">
+            <input class="sub-add-input" id="sub-input-${item.id}" placeholder="New subtask…"
+              onkeydown="handleSubKey(event,${item.id})"/>
+            <button class="sub-add-confirm" onclick="confirmSub('${item.id}')">✓</button>
+            <button class="sub-add-cancel" onclick="cancelSub('${item.id}')">×</button>
+          </div>`;
+      } else if (hasSubs && item.expanded && !isDone) {
+        subRows += `
+          <div class="sub-add-trigger" onclick="event.stopPropagation();openSubAdd('${item.id}')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add subtask
+          </div>`;
+      }
+      const maxH = showSubs ? `${(totalSubs + (item.addingSubtask ? 1 : 0)) * 56 + 48}px` : '0px';
+      subHtml = `<div class="subtasks" id="subs-${item.id}" style="max-height:${maxH}">${subRows ? `<div class="subtasks-inner">${subRows}</div>` : ''}</div>`;
+    }
+
+    // Progress
+    const progressHtml = (hasSubs && !isDone) ? `<div class="progress-row"><div class="progress-fill" style="width:${pct}%"></div></div>` : '';
+
+    // Expand/add-sub btn — shows + chevron when no subtasks (opens add input), expand chevron when subtasks exist
+    const expandHtml = !isDone
+      ? (hasSubs || item.addingSubtask)
+        ? `<button class="expand-btn${item.expanded ? ' open' : ''}" onclick="event.stopPropagation();toggleExpand('${item.id}')" aria-label="${item.expanded ? 'Collapse' : 'Expand'} subtasks">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+           </button>`
+        : `<button class="expand-btn add-sub-chevron" onclick="event.stopPropagation();openSubAdd('${item.id}')" title="Add subtask" aria-label="Add subtask">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+           </button>`
+      : '';
+
+    const numInner = isPicked ? `⭐` : nums[item.id];
+
+    const subHint = (hasSubs && !isDone) ? `<div class="item-sub-hint">${doneSubs}/${totalSubs} subtasks</div>` : '';
+
+    // Inline edit for parent task
+    const isEditing = (editingId === item.id && editingSubId === null);
+    const itemBodyHtml = isEditing
+      ? `<div class="edit-field" onclick="event.stopPropagation()">
+           <input class="edit-input" id="edit-input-${item.id}" value="${esc(item.text)}"
+             onkeydown="handleEditKey(event,${item.id})"/>
+           <button class="edit-confirm" onclick="event.stopPropagation();confirmEdit('${item.id}')">✓</button>
+           <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
+         </div>`
+      : `<div class="item-body">
+           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}<span class="strikethrough"></span></span>
+           ${subHint}
+         </div>`;
+
+    const hasRepeat = item.repeat && item.repeat.length > 0;
+
+    // Repeat picker row
+    const days = ['Su','M','T','W','Th','F','Sa'];
+    const repeatPickerHtml = (!isDone && item.repeatOpen)
+      ? `<div class="repeat-row" onclick="event.stopPropagation()">
+           ${days.map((d,i) => `<button class="repeat-day-btn${(item.repeat||[]).includes(i) ? ' active' : ''}" onclick="toggleRepeatDay('${item.id}',${i})">${d}</button>`).join('')}
+           ${hasRepeat ? `<span class="repeat-indicator">↻ resets on selected days</span>` : ''}
+         </div>` : '';
+
+    const actionBtnsHtml = !isDone ? `
+      <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      </button>
+      <button class="icon-btn task-action-btn${hasRepeat ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleRepeatPicker('${item.id}')" title="Repeat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      </button>` : '';
+
+    const taskBlockHtml = `
+      <div class="task-block${pickedClass}" id="task-${item.id}" data-id="${item.id}"${!isDone ? ' draggable="true"' : ''}>
+        <div class="swipe-wrap" id="sw-${item.id}">
+          <div class="swipe-delete-bg" id="sdb-${item.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            Delete
+          </div>
+          <div class="swipe-content" id="sc-${item.id}"
+            ontouchstart="swipeTouchStart(event,'${item.id}')" ontouchmove="swipeTouchMove(event,'${item.id}')" ontouchend="swipeTouchEnd(event,'${item.id}')">
+            <div class="item${isDone ? ' done' : ''}${noSubsClass}${isEditing ? ' editing' : ''}" onclick="${isEditing ? '' : `toggleItem('${item.id}')`}">
+              ${!isDone ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
+                  <circle cx="3" cy="2"  r="1.5"/><circle cx="7" cy="2"  r="1.5"/>
+                  <circle cx="3" cy="8"  r="1.5"/><circle cx="7" cy="8"  r="1.5"/>
+                  <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
+                </svg>
+              </div>` : ''}
+              <div class="checkbox">
+                <svg class="checkmark" viewBox="0 0 10 10" fill="none">
+                  <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#1E1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              ${!isDone ? `<div class="item-num${isPicked ? ' item-num-picked' : ''}">${numInner}</div>` : ''}
+              ${itemBodyHtml}
+              ${actionBtnsHtml}
+              ${expandHtml}
+              <button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteItem('${item.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            </div>
+            ${repeatPickerHtml}
+            ${progressHtml}
+            ${subHtml}
+          </div>
+        </div>
+      </div>`;
+
+    if (isDone) completedHtml += taskBlockHtml;
+    else html += taskBlockHtml;
+  });
+
+  container.innerHTML = html;
+  initDragListeners();
+
+  // Completed section below backlog
+  if (completedContainer) {
+    if (done.length > 0) {
+      completedContainer.innerHTML = `
+        <div class="backlog-section" style="border-top:1px solid var(--border)">
+          <div class="section-label-row" style="padding:10px 14px 5px">
+            <span class="section-label-text">Completed</span>
+            <button class="uncheck-all-btn" onclick="uncheckAll()">Uncheck all</button>
+          </div>
+          <div style="padding:0 10px 10px;display:flex;flex-direction:column;gap:3px">${completedHtml}</div>
+        </div>`;
+    } else {
+      completedContainer.innerHTML = '';
+    }
+  }
+
+  // Focus sub-input if adding
+  vms.forEach(it => {
+    if (it.addingSubtask) {
+      const el = document.getElementById(`sub-input-${it.id}`);
+      if (el) setTimeout(() => el.focus(), 30);
+    }
+  });
+
+  // Focus edit inputs
+  if (editingId !== null) {
+    if (editingSubId !== null) {
+      const el = document.getElementById(`edit-sub-${editingId}-${editingSubId}`);
+      if (el) { setTimeout(() => { el.focus(); el.select(); }, 30); }
+    } else {
+      const el = document.getElementById(`edit-input-${editingId}`);
+      if (el) { setTimeout(() => { el.focus(); el.select(); }, 30); }
+    }
+  }
+  renderBacklog();
+}
+
+// ── Data validation ────────────────────────────────────────────────────────
+function validateItem(item) {
+  if (!item || typeof item !== 'object') return null;
+  return {
+    id:          (typeof item.id === 'string' && item.id.length > 0) ? item.id : mkId(),
+    text:        typeof item.text === 'string'        ? item.text.slice(0, 2000) : '',
+    done:        typeof item.done === 'boolean'       ? item.done              : false,
+    completedAt: typeof item.completedAt === 'number' ? item.completedAt       : null,
+    repeat:      Array.isArray(item.repeat)
+                   ? item.repeat.filter(d => Number.isInteger(d) && d >= 0 && d <= 6) : [],
+    subtasks: Array.isArray(item.subtasks)
+      ? item.subtasks
+          .filter(s => s && typeof s === 'object')
+          .map(s => ({
+            id:   (typeof s.id === 'string' && s.id.length > 0) ? s.id : mkId(),
+            text: typeof s.text === 'string' ? s.text.slice(0, 2000) : '',
+            done: typeof s.done === 'boolean' ? s.done              : false,
+          }))
+      : [],
+  };
+}
+
+function validateLists(raw) {
+  if (!Array.isArray(raw)) return null;
+  const validated = raw
+    .filter(l => l && typeof l === 'object')
+    .map(l => ({
+      id:   (typeof l.id === 'string' && l.id.length > 0) ? l.id : mkId(),
+      name: typeof l.name === 'string' ? l.name.slice(0, 200) : 'Untitled',
+      items:        Array.isArray(l.items)        ? l.items.map(validateItem).filter(Boolean)        : [],
+      backlogItems: Array.isArray(l.backlogItems) ? l.backlogItems.map(validateItem).filter(Boolean) : [],
+    }));
+  return validated.length > 0 ? validated : null;
+}
+
+function esc(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// ── Drag & Drop reorder ────────────────────────────────────────────────────
+// safeId: parse a dataset integer — returns null instead of NaN so callers
+// can do a single null-check rather than relying on NaN's falsy quirks.
+function safeId(val) {
+  return (typeof val === 'string' && val.length > 0) ? val : null;
+}
+
+let dragSrcId = null;
+let dragSrcSection = null; // 'active' or 'backlog'
+
+function getSectionForId(id) {
+  if (items.find(i => i.id === id)) return 'active';
+  if (backlogItems.find(i => i.id === id)) return 'backlog';
+  return null;
+}
+
+function initDragListeners() {
+  const container = document.getElementById('list-container');
+  const backlogList = document.getElementById('backlog-list');
+  if (!container) return;
+
+  function setupContainer(el, section) {
+    el.addEventListener('dragstart', e => {
+      const block = e.target.closest('.task-block[draggable="true"]');
+      if (!block) return;
+      dragSrcId = safeId(block.dataset.id);
+      if (dragSrcId === null) return;
+      dragSrcSection = section;
+      block.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSrcId);
+    });
+
+    el.addEventListener('dragend', () => {
+      stopAutoScroll();
+      dragSrcId = null; dragSrcSection = null;
+      document.querySelectorAll('.task-block').forEach(b =>
+        b.classList.remove('dragging', 'drag-over-above', 'drag-over-below')
+      );
+      document.getElementById('list-container').classList.remove('drop-active');
+      document.getElementById('backlog-list').classList.remove('drop-active');
+    });
+
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      autoScroll(e.clientY);
+      const block = e.target.closest('.task-block[draggable="true"]');
+      document.querySelectorAll('.task-block').forEach(b =>
+        b.classList.remove('drag-over-above', 'drag-over-below')
+      );
+      // Highlight the zone if dragging from another section and no block target
+      if (!block && dragSrcSection && dragSrcSection !== section) {
+        el.classList.add('drop-active');
+      } else {
+        el.classList.remove('drop-active');
+      }
+      if (!block || !dragSrcId || safeId(block.dataset.id) === dragSrcId) return;
+      const rect = block.getBoundingClientRect();
+      block.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-above' : 'drag-over-below');
+    });
+
+    el.addEventListener('dragleave', e => {
+      if (!el.contains(e.relatedTarget)) { el.classList.remove('drop-active'); stopAutoScroll(); }
+      const block = e.target.closest('.task-block');
+      if (block && !block.contains(e.relatedTarget))
+        block.classList.remove('drag-over-above', 'drag-over-below');
+    });
+
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drop-active');
+      const block = e.target.closest('.task-block[draggable="true"]');
+      if (!dragSrcId) return;
+      const targetSection = section;
+
+      if (!block) {
+        // Dropped onto empty zone — move to end of that section
+        if (dragSrcSection !== targetSection) moveBetweenSections(dragSrcId, dragSrcSection, targetSection, -1, true);
+        return;
+      }
+      const targetId = safeId(block.dataset.id);
+      if (targetId === null || targetId === dragSrcId) return;
+      const rect = block.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
+
+      if (dragSrcSection === targetSection) {
+        reorderItems(dragSrcId, targetId, before, targetSection);
+      } else {
+        moveBetweenSections(dragSrcId, dragSrcSection, targetSection, targetId, before);
+      }
+    });
+  }
+
+  setupContainer(container, 'active');
+  if (backlogList) setupContainer(backlogList, 'backlog');
+}
+
+function moveBetweenSections(srcId, fromSection, toSection, targetId, insertBefore) {
+  let srcList   = fromSection === 'active' ? items : backlogItems;
+  let destList  = toSection   === 'active' ? items : backlogItems;
+
+  const srcIdx = srcList.findIndex(i => i.id === srcId);
+  if (srcIdx === -1) return;
+  const [moved] = srcList.splice(srcIdx, 1);
+
+  if (targetId === -1) {
+    destList.push(moved);
+  } else {
+    const tIdx = destList.findIndex(i => i.id === targetId);
+    if (tIdx === -1) { destList.push(moved); }
+    else destList.splice(insertBefore ? tIdx : tIdx + 1, 0, moved);
+  }
+
+  if (fromSection === 'active') items = srcList; else backlogItems = srcList;
+  if (toSection   === 'active') items = destList; else backlogItems = destList;
+
+  // Clear picks if moved
+  if (pickedId === srcId) pickedId = null;
+  if (pickedBacklogId === srcId) pickedBacklogId = null;
+
+  save(); render();
+}
+
+function reorderItems(srcId, targetId, insertBefore, section) {
+  let list = section === 'backlog' ? backlogItems : items.filter(i => !i.done);
+  const done = section === 'backlog' ? [] : items.filter(i => i.done);
+
+  const srcIdx = list.findIndex(i => i.id === srcId);
+  const [moved] = list.splice(srcIdx, 1);
+  const newTarget = list.findIndex(i => i.id === targetId);
+  list.splice(insertBefore ? newTarget : newTarget + 1, 0, moved);
+
+  if (section === 'backlog') backlogItems = list;
+  else items = [...list, ...done];
+
+  save(); render();
+}
+
+// ── Backlog render ─────────────────────────────────────────────────────────
+function renderBacklog() {
+  const countEl   = document.getElementById('backlog-count');
+  const pickBtn   = document.getElementById('backlog-pick-btn');
+  const listEl    = document.getElementById('backlog-list');
+  const addRow    = document.getElementById('backlog-add-row');
+  const bannerWrap= document.getElementById('backlog-banner-wrap');
+  if (!listEl) return;
+
+  rebuildDataLayer();
+  const vms = getBacklogViewModels();
+
+  if (countEl) countEl.textContent = vms.length;
+  if (pickBtn) pickBtn.disabled = vms.length === 0;
+  if (addRow)  addRow.style.display = backlogAddOpen ? '' : 'none';
+
+  // Banner
+  const pickedBacklog = vms.find(i => i.id === pickedBacklogId);
+  if (bannerWrap) {
+    if (pickedBacklog) {
+      bannerWrap.style.display = '';
+      document.getElementById('backlog-banner-text').textContent = pickedBacklog.text;
+    } else {
+      bannerWrap.style.display = 'none';
+      pickedBacklogId = null;
+    }
+  }
+
+  if (!vms.length) {
+    listEl.innerHTML = `<div class="backlog-empty">Drag tasks here or use + to add</div>`;
+    initDragListeners();
+    return;
+  }
+
+  let html = '';
+  vms.forEach(item => {
+    const isPicked  = item.id === pickedBacklogId;
+    const isDone    = item.done;
+    const totalSubs = item.subtasks ? item.subtasks.length : 0;
+    const doneSubs  = item.subtasks ? item.subtasks.filter(s => s.done).length : 0;
+    const hasSubs   = totalSubs > 0;
+    const pct       = hasSubs ? (doneSubs / totalSubs * 100) : 0;
+    const showSubs  = (hasSubs || item.addingSubtask) && item.expanded;
+    const noSubsClass = (!hasSubs && !item.addingSubtask) ? ' no-subs' : '';
+    const isEditing = (editingId === item.id && editingSubId === null);
+
+    const subHint = (hasSubs && !isDone) ? `<div class="item-sub-hint">${doneSubs}/${totalSubs} subtasks</div>` : '';
+
+    // Body — inline edit or normal
+    const itemBodyHtml = isEditing
+      ? `<div class="edit-field" onclick="event.stopPropagation()">
+           <input class="edit-input" id="edit-input-${item.id}" value="${esc(item.text)}"
+             onkeydown="handleEditKey(event,${item.id})"/>
+           <button class="edit-confirm" onclick="event.stopPropagation();confirmEdit('${item.id}')">✓</button>
+           <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
+         </div>`
+      : `<div class="item-body">
+           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}<span class="strikethrough"></span></span>
+           ${subHint}
+         </div>`;
+
+    const expandHtml = !isDone
+      ? (hasSubs || item.addingSubtask)
+        ? `<button class="expand-btn${item.expanded ? ' open' : ''}" onclick="event.stopPropagation();toggleBacklogExpand('${item.id}')" aria-label="${item.expanded ? 'Collapse' : 'Expand'} subtasks">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+           </button>`
+        : `<button class="expand-btn add-sub-chevron" onclick="event.stopPropagation();openBacklogSubAdd('${item.id}')" title="Add subtask" aria-label="Add subtask">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+           </button>`
+      : '';
+
+    const hasRepeatB = item.repeat && item.repeat.length > 0;
+    const actionBtnsHtmlB = !isDone ? `
+      <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      </button>
+      <button class="icon-btn task-action-btn${hasRepeatB ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleBacklogRepeatPicker('${item.id}')" title="Repeat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      </button>` : '';
+    const days = ['Su','M','T','W','Th','F','Sa'];
+    const repeatPickerHtmlB = (!isDone && item.repeatOpen)
+      ? `<div class="repeat-row" onclick="event.stopPropagation()">
+           ${days.map((d,i) => `<button class="repeat-day-btn${(item.repeat||[]).includes(i) ? ' active' : ''}" onclick="toggleBacklogRepeatDay('${item.id}',${i})">${d}</button>`).join('')}
+           ${hasRepeatB ? `<span class="repeat-indicator">↻ resets on selected days</span>` : ''}
+         </div>` : '';
+
+    // Subtask rows
+    let subHtml = '';
+    if (hasSubs || item.addingSubtask) {
+      let subRows = '';
+      (item.subtasks || []).forEach(sub => {
+        const isEditingSub = (editingId === item.id && editingSubId === sub.id);
+        const subTextHtml = isEditingSub
+          ? `<div class="edit-field" onclick="event.stopPropagation()" style="flex:1;min-width:0">
+               <input class="sub-edit-input" id="edit-sub-${item.id}-${sub.id}" value="${esc(sub.text)}"
+                 onkeydown="handleSubEditKey(event,${item.id},${sub.id})"/>
+               <button class="edit-confirm" onclick="event.stopPropagation();confirmSubEdit('${item.id}','${sub.id}')">✓</button>
+               <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
+             </div>`
+          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
+        const subEditBtn = !isEditingSub
+          ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-disabled)">
+               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+             </button>` : '';
+        subRows += `
+          <div class="subitem${sub.done ? ' done' : ''}" data-sub-id="${sub.id}" data-parent-id="${item.id}" onclick="${isEditingSub ? '' : `toggleBacklogSub('${item.id}','${sub.id}')`}">
+            <div class="sub-drag-handle" ontouchstart="subDragTouchStart(event,'${item.id}','${sub.id}')" onmousedown="subDragMouseStart(event,'${item.id}','${sub.id}')">
+              <svg width="8" height="12" viewBox="0 0 10 16" fill="currentColor">
+                <circle cx="3" cy="2" r="1.5"/><circle cx="7" cy="2" r="1.5"/>
+                <circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/>
+                <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
+              </svg>
+            </div>
+            <div class="sub-checkbox">
+              <svg class="sub-checkmark" viewBox="0 0 8 8" fill="none">
+                <polyline points="1,4 3,6.5 7,1.5" stroke="#1E1E1E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            ${subTextHtml}
+            ${subEditBtn}
+            <button class="sub-icon-btn" onclick="event.stopPropagation();deleteBacklogSub('${item.id}','${sub.id}')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>`;
+      });
+      if (item.addingSubtask) {
+        subRows += `
+          <div class="sub-add-row" onclick="event.stopPropagation()">
+            <input class="sub-add-input" id="sub-input-${item.id}" placeholder="New subtask…"
+              onkeydown="handleBacklogSubKey(event,${item.id})"/>
+            <button class="sub-add-confirm" onclick="confirmBacklogSub('${item.id}')">✓</button>
+            <button class="sub-add-cancel" onclick="cancelBacklogSub('${item.id}')">×</button>
+          </div>`;
+      } else if (hasSubs && item.expanded && !isDone) {
+        subRows += `
+          <div class="sub-add-trigger" onclick="event.stopPropagation();openBacklogSubAdd('${item.id}')">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add subtask
+          </div>`;
+      }
+      const maxH = showSubs ? `${(totalSubs + (item.addingSubtask ? 1 : 0)) * 56 + 48}px` : '0px';
+      subHtml = `<div class="subtasks" id="subs-${item.id}" style="max-height:${maxH}"><div class="subtasks-inner">${subRows}</div></div>`;
+    }
+
+    const progressHtml = (hasSubs && !isDone)
+      ? `<div class="progress-row"><div class="progress-fill" style="width:${pct}%"></div></div>` : '';
+
+    html += `
+      <div class="task-block${isPicked ? ' picked-card' : ''}" id="task-${item.id}" data-id="${item.id}"${!isDone ? ' draggable="true"' : ''}>
+        <div class="swipe-wrap" id="sw-${item.id}">
+          <div class="swipe-delete-bg" id="sdb-${item.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            Delete
+          </div>
+          <div class="swipe-content" id="sc-${item.id}"
+            ${!isDone ? `ontouchstart="swipeTouchStart(event,'${item.id}')" ontouchmove="swipeTouchMove(event,'${item.id}')" ontouchend="swipeTouchEnd(event,${item.id},true)"` : ''}>
+            <div class="item${isDone ? ' done' : ''}${noSubsClass}${isEditing ? ' editing' : ''}" onclick="${isEditing ? '' : `toggleBacklogItem('${item.id}')`}">
+              ${!isDone ? `<div class="drag-handle" onmousedown="event.stopPropagation()" ontouchstart="handleDragTouchStart(event,'${item.id}')">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
+                  <circle cx="3" cy="2" r="1.5"/><circle cx="7" cy="2" r="1.5"/>
+                  <circle cx="3" cy="8" r="1.5"/><circle cx="7" cy="8" r="1.5"/>
+                  <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
+                </svg>
+              </div>` : ''}
+              <div class="checkbox">
+                <svg class="checkmark" viewBox="0 0 10 10" fill="none">
+                  <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#1E1E1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              ${itemBodyHtml}
+              ${actionBtnsHtmlB}
+              ${expandHtml}
+              <button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteBacklogItem('${item.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            </div>
+            ${repeatPickerHtmlB}
+            ${progressHtml}
+            ${subHtml}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  listEl.innerHTML = html;
+
+  // Focus sub/edit inputs
+  vms.forEach(it => {
+    if (it.addingSubtask) {
+      const el = document.getElementById(`sub-input-${it.id}`);
+      if (el) setTimeout(() => el.focus(), 30);
+    }
+  });
+  if (editingId !== null) {
+    const item = vms.find(i => i.id === editingId);
+    if (item) {
+      if (editingSubId !== null) {
+        const el = document.getElementById(`edit-sub-${editingId}-${editingSubId}`);
+        if (el) setTimeout(() => { el.focus(); el.select(); }, 30);
+      } else {
+        const el = document.getElementById(`edit-input-${editingId}`);
+        if (el) setTimeout(() => { el.focus(); el.select(); }, 30);
+      }
+    }
+  }
+  initDragListeners();
+}
+
+// ── Backlog actions ────────────────────────────────────────────────────────
+function toggleBacklogAdd() {
+  backlogAddOpen = !backlogAddOpen;
+  renderBacklog();
+  if (backlogAddOpen) setTimeout(() => document.getElementById('backlog-input')?.focus(), 30);
+}
+
+function addBacklogItem() {
+  const input = document.getElementById('backlog-input');
+  const text = input ? input.value.trim() : '';
+  if (!text) { backlogAddOpen = false; renderBacklog(); return; }
+  backlogItems.push({ id: mkId(), text, done: false, subtasks: [], repeat: [] });
+  input.value = '';
+  backlogAddOpen = false;
+  save(); renderBacklog();
+}
+
+function deleteBacklogItem(id) {
+  backlogItems = backlogItems.filter(i => i.id !== id);
+  if (pickedBacklogId === id) pickedBacklogId = null;
+  save(); renderBacklog();
+}
+
+function toggleBacklogItem(id) {
+  const it = backlogItems.find(i => i.id === id);
+  if (!it) return;
+  it.done = !it.done;
+  if (it.done) {
+    (it.subtasks || []).forEach(s => s.done = true);
+    setUI(id, { expanded: false });
+    if (speedTallyActive) speedTallyTasks++;
+    // Move to items (completed section) — remove from backlog
+    backlogItems = backlogItems.filter(i => i.id !== id);
+    if (pickedBacklogId === id) pickedBacklogId = null;
+    items.push(it);
+    syncToList(); save(); render(); renderBacklog(); scheduleRepeatResets();
+  } else {
+    // Uncheck — move back to backlog
+    items = items.filter(i => i.id !== id);
+    it.subtasks.forEach(s => s.done = false);
+    if (speedTallyActive && speedTallyTasks > 0) speedTallyTasks--;
+    backlogItems.push(it);
+    syncToList(); save(); render(); renderBacklog();
+  }
+}
+
+function toggleBacklogExpand(id) {
+  setUI(id, { expanded: !getUI(id).expanded });
+  renderBacklog();
+}
+
+function openBacklogSubAdd(id) {
+  setUI(id, { addingSubtask: true, expanded: true });
+  renderBacklog();
+}
+
+function cancelBacklogSub(id) {
+  setUI(id, { addingSubtask: false });
+  renderBacklog();
+}
+
+function confirmBacklogSub(id) {
+  const it = backlogItems.find(i => i.id === id);
+  if (!it) return;
+  const el = document.getElementById(`sub-input-${id}`);
+  const text = el ? el.value.trim() : '';
+  if (!text) { cancelBacklogSub(id); return; }
+  if (!it.subtasks) it.subtasks = [];
+  it.subtasks.push({ id: mkId(), text, done: false });
+  setUI(id, { addingSubtask: false });
+  save(); renderBacklog();
+}
+
+function handleBacklogSubKey(e, id) {
+  e.stopPropagation();
+  if (e.key === 'Enter') confirmBacklogSub(id);
+  if (e.key === 'Escape') cancelBacklogSub(id);
+}
+
+function toggleBacklogSub(parentId, subId) {
+  const it = backlogItems.find(i => i.id === parentId);
+  if (!it) return;
+  const sub = (it.subtasks || []).find(s => s.id === subId);
+  if (sub) {
+    sub.done = !sub.done;
+    if (speedTallyActive) {
+      if (sub.done) speedTallySubtasks++;
+      else if (speedTallySubtasks > 0) speedTallySubtasks--;
+    }
+  }
+  if (it.subtasks && it.subtasks.length && it.subtasks.every(s => s.done)) {
+    it.done = true;
+    setUI(parentId, { expanded: false });
+    if (speedTallyActive) speedTallyTasks++;
+    // Move to completed section
+    backlogItems = backlogItems.filter(i => i.id !== parentId);
+    if (pickedBacklogId === parentId) pickedBacklogId = null;
+    items.push(it);
+    syncToList(); save(); render(); renderBacklog(); scheduleRepeatResets();
+    return;
+  }
+  save(); renderBacklog();
+}
+
+function deleteBacklogSub(parentId, subId) {
+  const it = backlogItems.find(i => i.id === parentId);
+  if (it) { it.subtasks = (it.subtasks || []).filter(s => s.id !== subId); save(); renderBacklog(); }
+}
+
+function pickBacklog() {
+  const active = backlogItems.filter(i => {
+    if (i.done) return false;
+    if (!i.subtasks || i.subtasks.length === 0) return true;
+    return i.subtasks.some(s => !s.done);
+  });
+  if (!active.length) return;
+  const pool = active.length > 1 ? active.filter(i => i.id !== pickedBacklogId) : active;
+  pickedBacklogId = pool[Math.floor(Math.random() * pool.length)].id;
+  renderBacklog();
+  setTimeout(() => {
+    const el = document.getElementById(`task-${pickedBacklogId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+}
+
+function dismissBacklogPick() { pickedBacklogId = null; renderBacklog(); }
+
+function scrollToBacklogPicked() {
+  if (!pickedBacklogId) return;
+  const it = backlogItems.find(i => i.id === pickedBacklogId);
+  const hasSubs = it && it.subtasks && it.subtasks.length > 0;
+  if (hasSubs && !getUI(pickedBacklogId).expanded) {
+    setUI(pickedBacklogId, { expanded: true });
+    renderBacklog();
+  }
+  setTimeout(() => {
+    const el = document.getElementById(`task-${pickedBacklogId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, hasSubs ? 60 : 0);
+}
+
+// ── Touch drag (mobile) ────────────────────────────────────────────────────
+let touchDragId  = null;
+let touchClone   = null;
+let touchOffsetY = 0;
+let scrollRafId  = null;
+
+function autoScroll(clientY) {
+  // Cancel any pending scroll frame
+  if (scrollRafId) { cancelAnimationFrame(scrollRafId); scrollRafId = null; }
+
+  const ZONE = 80;   // px from edge of viewport that triggers scroll
+  const MAX  = 18;   // max px per frame
+
+  function step() {
+    const vh = window.innerHeight;
+    let speed = 0;
+    if (clientY < ZONE) {
+      speed = -MAX * (1 - clientY / ZONE);
+    } else if (clientY > vh - ZONE) {
+      speed = MAX * ((clientY - (vh - ZONE)) / ZONE);
+    }
+    if (speed !== 0) {
+      window.scrollBy(0, speed);
+      scrollRafId = requestAnimationFrame(step);
+    }
+  }
+  step();
+}
+
+function stopAutoScroll() {
+  if (scrollRafId) { cancelAnimationFrame(scrollRafId); scrollRafId = null; }
+}
+
+function handleDragTouchStart(e, id) {
+  if (e.touches.length !== 1) return;
+  e.stopPropagation();
+  touchDragId = id;
+  dragSrcSection = getSectionForId(id);
+  const block = document.getElementById(`task-${id}`);
+  if (!block) return;
+  const rect = block.getBoundingClientRect();
+  touchOffsetY = e.touches[0].clientY - rect.top;
+  touchClone = block.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;pointer-events:none;opacity:0.85;box-shadow:0 8px 32px rgba(0,0,0,0.5);border-radius:14px;transition:none;`;
+  document.body.appendChild(touchClone);
+  block.classList.add('dragging');
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend',  onTouchEnd,  { once: true });
+}
+
+function onTouchMove(e) {
+  if (!touchClone) return;
+  e.preventDefault();
+  const y = e.touches[0].clientY;
+  const x = e.touches[0].clientX;
+  touchClone.style.top = (y - touchOffsetY) + 'px';
+  autoScroll(y);
+  document.querySelectorAll('.task-block').forEach(b => b.classList.remove('drag-over-above', 'drag-over-below'));
+  const el = document.elementFromPoint(x, y);
+  if (!el) return;
+  const block = el.closest('.task-block[draggable="true"]');
+  if (!block || safeId(block.dataset.id) === touchDragId) return;
+  const rect = block.getBoundingClientRect();
+  block.classList.add(y < rect.top + rect.height / 2 ? 'drag-over-above' : 'drag-over-below');
+}
+
+function onTouchEnd(e) {
+  stopAutoScroll();
+  document.removeEventListener('touchmove', onTouchMove);
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  const srcBlock = document.getElementById(`task-${touchDragId}`);
+  if (srcBlock) srcBlock.classList.remove('dragging');
+  document.querySelectorAll('.task-block').forEach(b => b.classList.remove('drag-over-above', 'drag-over-below'));
+  document.getElementById('list-container')?.classList.remove('drop-active');
+  document.getElementById('backlog-list')?.classList.remove('drop-active');
+
+  const y = e.changedTouches[0].clientY;
+  const x = e.changedTouches[0].clientX;
+  const el = document.elementFromPoint(x, y);
+  if (el) {
+    const block = el.closest('.task-block[draggable="true"]');
+    const backlogZone = el.closest('#backlog-list');
+    const activeZone  = el.closest('#list-container');
+    const toSection = backlogZone ? 'backlog' : 'active';
+    if (block && safeId(block.dataset.id) !== touchDragId) {
+      const targetId = safeId(block.dataset.id);
+      if (targetId !== null) {
+        const rect = block.getBoundingClientRect();
+        const before = y < rect.top + rect.height / 2;
+        if (dragSrcSection === toSection) {
+          reorderItems(touchDragId, targetId, before, toSection);
+        } else {
+          moveBetweenSections(touchDragId, dragSrcSection, toSection, targetId, before);
+        }
+      }
+    } else if ((backlogZone || activeZone) && dragSrcSection !== toSection) {
+      moveBetweenSections(touchDragId, dragSrcSection, toSection, -1, true);
+    }
+  }
+  touchDragId = null; dragSrcSection = null;
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+function addItem() {
+  const input = document.getElementById('main-input');
+  const text = input.value.trim();
+  if (!text) return;
+  items.push({ id: mkId(), text, done: false, subtasks: [], repeat: [] });
+  input.value = '';
+  save(); render();
+}
+
+// ── Swipe to delete ────────────────────────────────────────────────────────
+const swipeState = {};
+const SWIPE_THRESHOLD = 60;
+
+function swipeTouchStart(e, id) {
+  // Don't hijack drag-handle touches
+  if (e.target.closest('.drag-handle')) return;
+  swipeState[id] = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, dx: 0, decided: false };
+}
+
+function swipeTouchMove(e, id) {
+  const s = swipeState[id];
+  if (!s) return;
+  const dx = e.touches[0].clientX - s.startX;
+  const dy = e.touches[0].clientY - s.startY;
+
+  if (!s.decided) {
+    if (Math.abs(dy) > Math.abs(dx)) { delete swipeState[id]; return; } // vertical scroll
+    if (Math.abs(dx) < 6) return;
+    s.decided = true;
+  }
+
+  if (dx > 0) return; // only left swipe
+  e.preventDefault();
+  s.dx = dx;
+  const clamped = Math.max(dx, -80);
+  const sc = document.getElementById(`sc-${id}`);
+  const bg = document.getElementById(`sdb-${id}`);
+  if (sc) sc.style.transform = `translateX(${clamped}px)`;
+  if (bg) bg.style.opacity = Math.min(-clamped / 80, 1);
+}
+
+function swipeTouchEnd(e, id, isBacklog) {
+  const s = swipeState[id];
+  if (!s) return;
+  const sc = document.getElementById(`sc-${id}`);
+  const bg = document.getElementById(`sdb-${id}`);
+  if (s.dx < -SWIPE_THRESHOLD) {
+    if (sc) { sc.style.transition = 'transform 0.18s ease'; sc.style.transform = 'translateX(-100%)'; }
+    if (bg) bg.style.opacity = '1';
+    setTimeout(() => { isBacklog ? deleteBacklogItem(id) : deleteItem(id); }, 180);
+  } else {
+    if (sc) { sc.style.transition = 'transform 0.2s ease'; sc.style.transform = ''; }
+    if (bg) { bg.style.opacity = '0'; }
+  }
+  delete swipeState[id];
+}
+
+function toggleBacklogOverflow(id) {
+  const it = backlogItems.find(i => i.id === id);
+  if (!it) return;
+  if (openOverflowId === id) { closeOverflow(); return; }
+  closeOverflow();
+  openOverflowId = id;
+  const wrap = document.getElementById(`omw-${id}`);
+  if (!wrap) return;
+  const pop = document.createElement('div');
+  pop.className = 'overflow-popover';
+  const rect = wrap.getBoundingClientRect();
+  if (rect.bottom + 160 > window.innerHeight) pop.classList.add('above');
+  pop.innerHTML = `
+    <button class="overflow-item" onclick="event.stopPropagation();closeOverflow();startEdit('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      Edit
+    </button>
+    <button class="overflow-item" onclick="event.stopPropagation();closeOverflow();openBacklogSubAdd('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add subtask
+    </button>`;
+  wrap.appendChild(pop);
+  setTimeout(() => {
+    document.addEventListener('click', closeOverflow, { once: true });
+    document.addEventListener('touchend', closeOverflow, { once: true });
+  }, 0);
+}
+let openOverflowId = null;
+
+function closeOverflow() {
+  if (openOverflowId === null) return;
+  const wrap = document.getElementById(`omw-${openOverflowId}`);
+  if (wrap) {
+    const pop = wrap.querySelector('.overflow-popover');
+    if (pop) pop.remove();
+  }
+  openOverflowId = null;
+}
+
+function toggleOverflow(id) {
+  if (openOverflowId === id) { closeOverflow(); return; }
+  closeOverflow();
+  openOverflowId = id;
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  const wrap = document.getElementById(`omw-${id}`);
+  if (!wrap) return;
+  const hasRepeat = it.repeat && it.repeat.length > 0;
+
+  const pop = document.createElement('div');
+  pop.className = 'overflow-popover';
+
+  // Check if we're near the bottom of the screen — if so, open upward
+  const rect = wrap.getBoundingClientRect();
+  if (rect.bottom + 160 > window.innerHeight) pop.classList.add('above');
+
+  pop.innerHTML = `
+    <button class="overflow-item" onclick="event.stopPropagation();closeOverflow();startEdit('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      Edit
+    </button>
+    <button class="overflow-item${hasRepeat ? ' repeat-active' : ''}" onclick="event.stopPropagation();closeOverflow();toggleRepeatPicker('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      Repeat${hasRepeat ? ' ↻' : ''}
+    </button>
+    <button class="overflow-item" onclick="event.stopPropagation();closeOverflow();openSubAdd('${id}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add subtask
+    </button>`;
+
+  wrap.appendChild(pop);
+
+  // Close on outside tap
+  setTimeout(() => {
+    document.addEventListener('click', closeOverflow, { once: true });
+    document.addEventListener('touchend', closeOverflow, { once: true });
+  }, 0);
+}
+
+function toggleRepeatPicker(id) {
+  setUI(id, { repeatOpen: !getUI(id).repeatOpen });
+  render();
+}
+
+function toggleRepeatDay(id, dayIndex) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  if (!it.repeat) it.repeat = [];
+  const idx = it.repeat.indexOf(dayIndex);
+  if (idx === -1) it.repeat.push(dayIndex);
+  else it.repeat.splice(idx, 1);
+  save(); render();
+}
+
+function toggleBacklogRepeatPicker(id) {
+  setUI(id, { repeatOpen: !getUI(id).repeatOpen });
+  renderBacklog();
+}
+
+function toggleBacklogRepeatDay(id, dayIndex) {
+  const it = backlogItems.find(i => i.id === id);
+  if (!it) return;
+  if (!it.repeat) it.repeat = [];
+  const idx = it.repeat.indexOf(dayIndex);
+  if (idx === -1) it.repeat.push(dayIndex);
+  else it.repeat.splice(idx, 1);
+  save(); renderBacklog();
+}
+
+function toggleItem(id) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  it.done = !it.done;
+  if (it.done) {
+    it.subtasks.forEach(s => s.done = true);
+    setUI(id, { expanded: false });
+    it.completedAt = Date.now();
+    if (speedTallyActive) speedTallyTasks++;
+  } else {
+    it.subtasks.forEach(s => s.done = false);
+    if (speedTallyActive && speedTallyTasks > 0) speedTallyTasks--;
+  }
+  if (pickedId === id) pickedId = null;
+  save(); render();
+  scheduleRepeatResets();
+}
+
+// ── Repeat reset scheduler ─────────────────────────────────────────────────
+const repeatTimers = {};
+
+function msUntilNextOccurrence(targetDay) {
+  const now = new Date();
+  const resetTime = new Date(now);
+  let daysAhead = (targetDay - now.getDay() + 7) % 7;
+  if (daysAhead === 0 && (now.getHours() > 0 || now.getMinutes() >= 1)) {
+    daysAhead = 7;
+  }
+  resetTime.setDate(now.getDate() + daysAhead);
+  resetTime.setHours(0, 1, 0, 0);
+  return resetTime.getTime() - now.getTime();
+}
+
+function checkOverdueResets() {
+  const now = new Date();
+  const todayDay = now.getDay();
+  const todayReset = new Date(now);
+  todayReset.setHours(0, 1, 0, 0);
+
+  let changed = false;
+  lists.forEach(list => {
+    (list.items || []).forEach(it => {
+      if (!it.done || !it.repeat || !it.repeat.length) return;
+      if (!it.repeat.includes(todayDay)) return;
+      // Only reset if completed before today's 12:01am — not if completed today
+      const completedAt = it.completedAt || 0;
+      if (completedAt < todayReset.getTime()) {
+        it.done = false;
+        it.subtasks.forEach(s => s.done = false);
+        it.completedAt = null;
+        changed = true;
+      }
+    });
+  });
+  if (changed) {
+    save();
+    syncFromList();
+    render();
+  }
+}
+
+function scheduleRepeatResets() {
+  Object.values(repeatTimers).forEach(tid => clearTimeout(tid));
+  Object.keys(repeatTimers).forEach(k => delete repeatTimers[k]);
+
+  // Sync working arrays into lists first
+  syncToList();
+
+  lists.forEach(list => {
+    (list.items || []).forEach(it => {
+      if (!it.done || !it.repeat || !it.repeat.length) return;
+      const delays = it.repeat.map(d => msUntilNextOccurrence(d));
+      const soonest = Math.min(...delays);
+      const key = `${list.id}-${it.id}`;
+      repeatTimers[key] = setTimeout(() => {
+        const targetList = lists.find(l => l.id === list.id);
+        if (!targetList) return;
+        const targetItem = (targetList.items || []).find(i => i.id === it.id);
+        if (!targetItem || !targetItem.done) return;
+        targetItem.done = false;
+        targetItem.subtasks.forEach(s => s.done = false);
+        targetItem.completedAt = null;
+        save();
+        if (list.id === activeListId) { syncFromList(); render(); }
+        scheduleRepeatResets();
+      }, soonest);
+    });
+  });
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  if (pickedId === id) pickedId = null;
+  save(); render();
+}
+
+function clearDone() {
+  items = items.filter(i => !i.done || (i.repeat && i.repeat.length > 0));
+  save(); render();
+}
+
+function uncheckAll() {
+  items = items.map(it => {
+    if (!it.done) return it;
+    return { ...it, done: false, subtasks: (it.subtasks || []).map(s => ({ ...s, done: false })) };
+  });
+  save(); render();
+}
+
+function toggleExpand(id) {
+  setUI(id, { expanded: !getUI(id).expanded });
+  render();
+}
+
+function openSubAdd(id) {
+  setUI(id, { addingSubtask: true, expanded: true });
+  render();
+}
+
+function cancelSub(id) {
+  setUI(id, { addingSubtask: false });
+  render();
+}
+
+function confirmSub(id) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  const el = document.getElementById(`sub-input-${id}`);
+  const text = el ? el.value.trim() : '';
+  if (!text) { cancelSub(id); return; }
+  it.subtasks.push({ id: mkId(), text, done: false });
+  setUI(id, { addingSubtask: false });
+  save(); render();
+}
+
+function handleSubKey(e, id) {
+  e.stopPropagation();
+  if (e.key === 'Enter') confirmSub(id);
+  if (e.key === 'Escape') cancelSub(id);
+}
+
+function toggleSub(parentId, subId) {
+  const it = items.find(i => i.id === parentId);
+  if (!it) return;
+  const sub = it.subtasks.find(s => s.id === subId);
+  if (sub) {
+    sub.done = !sub.done;
+    if (speedTallyActive) {
+      if (sub.done) speedTallySubtasks++;
+      else if (speedTallySubtasks > 0) speedTallySubtasks--;
+    }
+  }
+  if (it.subtasks.length && it.subtasks.every(s => s.done)) {
+    it.done = true;
+    setUI(parentId, { expanded: false });
+    it.completedAt = Date.now();
+    if (speedTallyActive) speedTallyTasks++;
+  }
+  save(); render(); scheduleRepeatResets();
+}
+
+function deleteSub(parentId, subId) {
+  const it = items.find(i => i.id === parentId);
+  if (it) { it.subtasks = it.subtasks.filter(s => s.id !== subId); save(); render(); }
+}
+
+// ── Edit actions ───────────────────────────────────────────────────────────
+function startEdit(id) {
+  editingId = id; editingSubId = null; render();
+}
+function cancelEdit() {
+  editingId = null; editingSubId = null; render();
+}
+function confirmEdit(id) {
+  const el = document.getElementById(`edit-input-${id}`);
+  const text = el ? el.value.trim() : '';
+  if (text) {
+    const it = items.find(i => i.id === id) || backlogItems.find(i => i.id === id);
+    if (it) it.text = text;
+    save();
+  }
+  editingId = null; editingSubId = null; render(); renderBacklog();
+}
+function handleEditKey(e, id) {
+  e.stopPropagation();
+  if (e.key === 'Enter') confirmEdit(id);
+  if (e.key === 'Escape') cancelEdit();
+}
+function startSubEdit(parentId, subId) {
+  editingId = parentId; editingSubId = subId; render();
+}
+function confirmSubEdit(parentId, subId) {
+  const el = document.getElementById(`edit-sub-${parentId}-${subId}`);
+  const text = el ? el.value.trim() : '';
+  if (text) {
+    const it = items.find(i => i.id === parentId) || backlogItems.find(i => i.id === parentId);
+    if (it) { const sub = it.subtasks.find(s => s.id === subId); if (sub) sub.text = text; }
+    save();
+  }
+  editingId = null; editingSubId = null; render(); renderBacklog();
+}
+function handleSubEditKey(e, parentId, subId) {
+  e.stopPropagation();
+  if (e.key === 'Enter') confirmSubEdit(parentId, subId);
+  if (e.key === 'Escape') cancelEdit();
+}
+
+function pickRandom() {
+  // Only pick active tasks that have something left to do:
+  // either no subtasks, or at least one subtask still unchecked
+  const active = items.filter(i => {
+    if (i.done) return false;
+    if (!i.subtasks || i.subtasks.length === 0) return true;
+    return i.subtasks.some(s => !s.done);
+  });
+  if (!active.length) return;
+  const pool = active.length > 1 ? active.filter(i => i.id !== pickedId) : active;
+  pickedId = pool[Math.floor(Math.random() * pool.length)].id;
+  render();
+}
+
+function dismissPick() { pickedId = null; render(); }
+
+function scrollToPicked() {
+  if (!pickedId) return;
+  // Expand the task if it has subtasks
+  const it = items.find(i => i.id === pickedId);
+  const hasSubs = it && it.subtasks.length > 0;
+  if (hasSubs && !getUI(pickedId).expanded) {
+    setUI(pickedId, { expanded: true });
+    render();
+  }
+  setTimeout(() => {
+    const el = document.getElementById(`task-${pickedId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, hasSubs ? 60 : 0);
+}
+
+// ── Subtask drag-to-reorder ────────────────────────────────────────────────
+let subDragParentId = null;
+let subDragSubId    = null;
+let subTouchClone   = null;
+let subTouchOffY    = 0;
+
+function getSubArray(parentId) {
+  const active = items.find(i => i.id === parentId);
+  if (active) return { arr: active.subtasks, section: 'active' };
+  const backlog = backlogItems.find(i => i.id === parentId);
+  if (backlog) return { arr: backlog.subtasks || [], section: 'backlog' };
+  return null;
+}
+
+function reorderSubs(parentId, srcSubId, targetSubId, insertBefore) {
+  const found = getSubArray(parentId);
+  if (!found) return;
+  const arr = found.arr;
+  const srcIdx = arr.findIndex(s => s.id === srcSubId);
+  if (srcIdx === -1) return;
+  const [moved] = arr.splice(srcIdx, 1);
+  const tIdx = arr.findIndex(s => s.id === targetSubId);
+  if (tIdx === -1) { arr.push(moved); }
+  else arr.splice(insertBefore ? tIdx : tIdx + 1, 0, moved);
+  save();
+  if (found.section === 'backlog') renderBacklog(); else render();
+}
+
+function clearSubDragStates() {
+  document.querySelectorAll('.subitem').forEach(el =>
+    el.classList.remove('sub-dragging', 'sub-drag-over-above', 'sub-drag-over-below')
+  );
+}
+
+// ── Mouse drag for subtasks ────────────────────────────────────────────────
+function subDragMouseStart(e, parentId, subId) {
+  if (e.button !== 0) return;
+  e.stopPropagation();
+  e.preventDefault();
+  subDragParentId = parentId;
+  subDragSubId    = subId;
+  const el = e.target.closest('.subitem');
+  if (el) el.classList.add('sub-dragging');
+
+  function onMouseMove(ev) {
+    clearSubDragStates();
+    const el2 = document.elementFromPoint(ev.clientX, ev.clientY);
+    if (!el2) return;
+    const target = el2.closest('.subitem[data-parent-id]');
+    if (!target || safeId(target.dataset.parentId) !== parentId) return;
+    if (safeId(target.dataset.subId) === subId) return;
+    const rect = target.getBoundingClientRect();
+    target.classList.add(ev.clientY < rect.top + rect.height / 2 ? 'sub-drag-over-above' : 'sub-drag-over-below');
+  }
+
+  function onMouseUp(ev) {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    const el2 = document.elementFromPoint(ev.clientX, ev.clientY);
+    clearSubDragStates();
+    if (!el2) return;
+    const target = el2.closest('.subitem[data-parent-id]');
+    if (!target || safeId(target.dataset.parentId) !== parentId) return;
+    const targetSubId = safeId(target.dataset.subId);
+    if (targetSubId === null || targetSubId === subId) return;
+    const rect = target.getBoundingClientRect();
+    reorderSubs(parentId, subId, targetSubId, ev.clientY < rect.top + rect.height / 2);
+    subDragParentId = null; subDragSubId = null;
+  }
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup',   onMouseUp);
+}
+
+// ── Touch drag for subtasks ────────────────────────────────────────────────
+function subDragTouchStart(e, parentId, subId) {
+  if (e.touches.length !== 1) return;
+  e.stopPropagation();
+  subDragParentId = parentId;
+  subDragSubId    = subId;
+  const el = e.target.closest('.subitem');
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  subTouchOffY = e.touches[0].clientY - rect.top;
+  subTouchClone = el.cloneNode(true);
+  subTouchClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;pointer-events:none;opacity:0.85;box-shadow:0 4px 16px rgba(0,0,0,0.4);border-radius:8px;transition:none;background:var(--surface-raised);`;
+  document.body.appendChild(subTouchClone);
+  el.classList.add('sub-dragging');
+  document.addEventListener('touchmove', onSubTouchMove, { passive: false });
+  document.addEventListener('touchend',  onSubTouchEnd,  { once: true });
+}
+
+function onSubTouchMove(e) {
+  if (!subTouchClone) return;
+  e.preventDefault();
+  const y = e.touches[0].clientY;
+  const x = e.touches[0].clientX;
+  subTouchClone.style.top = (y - subTouchOffY) + 'px';
+  clearSubDragStates();
+  const el = document.elementFromPoint(x, y);
+  if (!el) return;
+  const target = el.closest('.subitem[data-parent-id]');
+  if (!target || safeId(target.dataset.parentId) !== subDragParentId) return;
+  if (safeId(target.dataset.subId) === subDragSubId) return;
+  const rect = target.getBoundingClientRect();
+  target.classList.add(y < rect.top + rect.height / 2 ? 'sub-drag-over-above' : 'sub-drag-over-below');
+}
+
+function onSubTouchEnd(e) {
+  document.removeEventListener('touchmove', onSubTouchMove);
+  if (subTouchClone) { subTouchClone.remove(); subTouchClone = null; }
+  clearSubDragStates();
+  const y = e.changedTouches[0].clientY;
+  const x = e.changedTouches[0].clientX;
+  const el = document.elementFromPoint(x, y);
+  if (el) {
+    const target = el.closest('.subitem[data-parent-id]');
+    if (target && safeId(target.dataset.parentId) === subDragParentId) {
+      const targetSubId = safeId(target.dataset.subId);
+      if (targetSubId !== null && targetSubId !== subDragSubId) {
+        const rect = target.getBoundingClientRect();
+        reorderSubs(subDragParentId, subDragSubId, targetSubId, y < rect.top + rect.height / 2);
+      }
+    }
+  }
+  subDragParentId = null; subDragSubId = null;
+}
+let confettiRaf = null;
+let confettiParticles = [];
+
+function launchConfetti() {
+  stopConfetti();
+  const canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#A259FF','#1ABCFE','#0ACF83','#FF7262','#F24E1E','#fff'];
+
+  function resize() {
+    const inner = canvas.parentElement;
+    canvas.width  = inner ? inner.offsetWidth  : 300;
+    canvas.height = inner ? inner.offsetHeight : 200;
+  }
+  resize();
+
+  // Spawn particles
+  confettiParticles = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height * 0.4 - canvas.height * 0.2,
+    r: Math.random() * 5 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 2.5,
+    vy: Math.random() * 2 + 1.5,
+    rot: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 0.2,
+    shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    w: Math.random() * 8 + 4,
+    h: Math.random() * 5 + 3,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.88;
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.rot += p.spin;
+      p.vy += 0.04; // gravity
+      if (p.y > canvas.height + 20) {
+        // recycle from top
+        p.y  = -10;
+        p.x  = Math.random() * canvas.width;
+        p.vy = Math.random() * 1.5 + 1;
+      }
+    });
+    confettiRaf = requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Auto-stop after 4 seconds
+  setTimeout(stopConfetti, 4000);
+}
+
+function stopConfetti() {
+  if (confettiRaf) { cancelAnimationFrame(confettiRaf); confettiRaf = null; }
+  confettiParticles = [];
+  const canvas = document.getElementById('confetti-canvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── Visibility sync — catch up timer display when returning from background ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+
+  // Check for any repeat resets that fired while the app was closed
+  checkOverdueResets();
+  scheduleRepeatResets();
+
+  // Resume audio context if it was suspended while backgrounded
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+
+  // If timer is running, always show the unlock banner —
+  // we can't know for sure if iOS kept audio unlocked
+  if (speedRunning && speedEndTime) {
+    showAudioUnlockBanner();
+  }
+
+  // Re-check repeat resets that may have fired while backgrounded
+  let resetHappened = false;
+  lists.forEach(list => {
+    (list.items || []).forEach(it => {
+      if (!it.done || !it.repeat || it.repeat.length === 0) return;
+      // If the soonest reset time has already passed, reset now
+      const delays = it.repeat.map(d => msUntilNextOccurrence(d));
+      // msUntilNextOccurrence always returns future ms; if all delays are ~7 days
+      // that means the reset already happened — check by seeing if any delay < 60s
+      // Actually: a missed reset means the item is done but the timeout fired while
+      // backgrounded (JS paused). Re-schedule handles the next one.
+      // For missed ones: if today is a repeat day and item is done, reset it now.
+      const todayDay = new Date().getDay();
+      const now = new Date();
+      const isPastMidnight = now.getHours() === 0 && now.getMinutes() <= 5; // within 5min of midnight
+      if (it.repeat.includes(todayDay) && isPastMidnight) {
+        it.done = false;
+        it.subtasks.forEach(s => s.done = false);
+        resetHappened = true;
+      }
+    });
+  });
+  if (resetHappened) {
+    save();
+    syncFromList();
+    render();
+  }
+  scheduleRepeatResets();
+
+  // Speed timer sync
+  if (!speedRunning || !speedEndTime) return;
+  const remainingMs = speedEndTime - Date.now();
+  const remaining = Math.max(0, Math.ceil(remainingMs / 1000));
+  speedSeconds = remaining;
+  if (remainingMs <= 500) {
+    fireAlarm();
+  } else {
+    updateTimerDisplay();
+  }
+});
+migrateLocalIdsToUUIDs();
+load();
+const nameInput = document.getElementById('list-name-input');
+if (nameInput) nameInput.value = currentList().name;
+render();
+renderBacklog();
+checkOverdueResets();
+scheduleRepeatResets();
+checkJoinParam();
+initAuth();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -A 2 \"function\\\\|^--$\")",
+      "Bash(awk 'NR>=2071 && NR<=2330' \"/Users/courtneyjacinic/Desktop/randomtasks app/index.html\")",
+      "Read(//Users/courtneyjacinic/**)",
+      "Read(//private/var/folders/**)",
+      "Bash(python3 *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/**)",
+      "Bash(/usr/bin/python3 *)",
+      "Bash(node -e \"console.log\\('hello'\\)\")",
+      "Bash(perl *)"
+    ]
+  }
+}
