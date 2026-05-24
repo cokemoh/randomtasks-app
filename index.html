@@ -1138,6 +1138,15 @@ button.drawer-list-icon:active { transform: scale(0.88); }
 }
 .drawer-list-item.shared-list .drawer-drag-handle { visibility: hidden; }
 
+/* ── Top bar list icon ── */
+.top-bar-list-icon-btn {
+  width: 36px; height: 36px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 24px; padding: 0;
+  transition: transform 0.15s; line-height: 1;
+}
+.top-bar-list-icon-btn:active { transform: scale(0.88); }
+
 /* ── Hamburger button ── */
 .hamburger-btn {
   width: 44px; height: 44px; border: none; background: none; cursor: pointer;
@@ -1313,6 +1322,7 @@ button.drawer-list-icon:active { transform: scale(0.88); }
             <rect y="12" width="18" height="2" rx="1"/>
           </svg>
         </button>
+        <button class="top-bar-list-icon-btn" id="top-bar-list-icon" onclick="openTopBarIconPicker()" aria-label="Change list icon"></button>
         <div style="min-width:0">
           <div class="title-wrap">
             <input class="top-bar-title-input" id="list-name-input" value="Tasks"
@@ -2720,7 +2730,7 @@ function updateHeaderActions() {
 }
 
 // ── Multi-list state ───────────────────────────────────────────────────────
-const APP_ICON_SVG_MINI = `<svg width="26" height="26" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#1E1E1E"/><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+const APP_ICON_SVG_MINI = `<svg width="30" height="30" viewBox="181.5 14.5 308 308" fill="none"><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
 const ICON_PRESETS = ['📝','📋','✅','🎯','🏠','💼','🛒','📚','💡','🔥','⭐','🎉','💪','🎨','🌟','🍕','💻','🌱','🎵','🧘'];
 let pickerListId = null;
 
@@ -3050,7 +3060,7 @@ function renderDrawerListItem(list) {
   const icon       = list.icon || 'app';
   const isAppIcon  = icon === 'app';
   const iconContent = isAppIcon ? APP_ICON_SVG_MINI : esc(icon);
-  const iconStyle   = isAppIcon ? 'background:transparent;padding:3px' : '';
+  const iconStyle   = isAppIcon ? 'background:transparent' : '';
   const iconEl = isOwner
     ? `<button class="drawer-list-icon" style="${iconStyle}" onclick="event.stopPropagation();openIconPicker('${list.id}')" aria-label="Change icon">${iconContent}</button>`
     : `<div class="drawer-list-icon" style="${iconStyle}">${iconContent}</div>`;
@@ -3098,7 +3108,7 @@ function openIconPicker(listId) {
   if (!list) return;
   const currentIcon = list.icon || 'app';
 
-  const appIconSvg = `<svg width="22" height="22" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#1E1E1E"/><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+  const appIconSvg = `<svg width="24" height="24" viewBox="181.5 14.5 308 308" fill="none"><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
 
   let gridHtml = `<button class="icon-picker-btn${currentIcon === 'app' ? ' selected' : ''}" onclick="setListIcon('${listId}','app')" aria-label="App icon">${appIconSvg}</button>`;
   gridHtml += ICON_PRESETS.map(e =>
@@ -3129,7 +3139,32 @@ function setListIcon(listId, icon, keepOpen) {
   list.icon = icon;
   save();
   renderDrawer();
+  if (listId === activeListId) updateTopBarIcon();
   if (!keepOpen) closeIconPicker();
+}
+
+function updateTopBarIcon() {
+  const el = document.getElementById('top-bar-list-icon');
+  if (!el) return;
+  const list = currentList();
+  const icon = list?.icon || 'app';
+  const isOwner = !list?.role || list?.role === 'owner';
+  if (icon === 'app') {
+    el.innerHTML = `<svg width="28" height="28" viewBox="181.5 14.5 308 308" fill="none"><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+    el.style.fontSize = '';
+  } else {
+    el.innerHTML = '';
+    el.textContent = icon;
+    el.style.fontSize = '24px';
+  }
+  el.style.cursor = isOwner ? 'pointer' : 'default';
+  el.style.pointerEvents = isOwner ? '' : 'none';
+}
+
+function openTopBarIconPicker() {
+  const list = currentList();
+  if (!list || list.role === 'editor') return;
+  openIconPicker(list.id);
 }
 
 // ── Drawer list drag-to-reorder ────────────────────────────────────────────
@@ -3304,6 +3339,7 @@ function render() {
   const done   = vms.filter(i => i.done);
   const ordered = [...active, ...done];
   document.getElementById('header-sub').textContent = `${active.length} active · ${done.length} done`;
+  updateTopBarIcon();
   const pickable = vms.filter(i => {
     if (i.done) return false;
     if (!i.subtasks || i.subtasks.length === 0) return true;
