@@ -3260,6 +3260,13 @@ function render() {
     // Progress
     const progressHtml = (hasSubs && !isDone) ? `<div class="progress-row"><div class="progress-fill" style="width:${pct}%"></div></div>` : '';
 
+    const numInner = isPicked ? `⭐` : nums[item.id];
+
+    const subHint = (hasSubs && !isDone) ? `<div class="item-sub-hint">${doneSubs}/${totalSubs} subtasks</div>` : '';
+
+    // Inline edit for parent task
+    const isEditing = (editingId === item.id && editingSubId === null);
+
     // Expand/add-sub btn — shows + chevron when no subtasks (opens add input), expand chevron when subtasks exist
     const expandHtml = (!isDone && !isEditing)
       ? (hasSubs || item.addingSubtask)
@@ -3270,13 +3277,6 @@ function render() {
              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
            </button>`
       : '';
-
-    const numInner = isPicked ? `⭐` : nums[item.id];
-
-    const subHint = (hasSubs && !isDone) ? `<div class="item-sub-hint">${doneSubs}/${totalSubs} subtasks</div>` : '';
-
-    // Inline edit for parent task
-    const isEditing = (editingId === item.id && editingSubId === null);
     const itemBodyHtml = isEditing
       ? `<div class="edit-field" onclick="event.stopPropagation()">
            <input class="edit-input" id="edit-input-${item.id}" value="${esc(item.text)}"
