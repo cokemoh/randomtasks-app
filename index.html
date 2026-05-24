@@ -2332,7 +2332,7 @@ async function loadFromSupabase() {
   try {
     // Load all lists this user can see (RLS filters to owned + shared)
     const cloudLists = await sbRest(
-      `lists?select=id,name,share_token,owner_id&order=id`
+      `lists?select=id,name,share_token,owner_id,icon&order=id`
     );
 
     // Find which lists this user is an editor on (not owner)
@@ -2367,7 +2367,7 @@ async function loadFromSupabase() {
         const prev = lists.find(l => l.id === cl.id);
         return {
           id: cl.id, name: cl.name,
-          icon: prev?.icon || 'app',
+          icon: cl.icon || prev?.icon || 'app',
           share_token: role === 'owner' ? (cl.share_token || null) : null,
           shared: role === 'owner' ? ownerSharedIds.has(cl.id) : false,
           role,
@@ -2454,7 +2454,7 @@ async function saveToSupabase() {
     await sbRest('lists', {
       method: 'POST',
       prefer: 'resolution=merge-duplicates,return=minimal',
-      body:   ownedLists.map(l => ({ id: l.id, owner_id: supabaseUser.id, name: l.name })),
+      body:   ownedLists.map(l => ({ id: l.id, owner_id: supabaseUser.id, name: l.name, icon: l.icon || 'app' })),
     }).catch(e => console.warn('[Supabase] lists save failed:', e.message || e));
   }
 
@@ -3660,6 +3660,7 @@ function validateLists(raw) {
     .map(l => ({
       id:   (typeof l.id === 'string' && l.id.length > 0) ? l.id : mkId(),
       name: typeof l.name === 'string' ? l.name.slice(0, 200) : 'Untitled',
+      icon: typeof l.icon === 'string' ? l.icon : 'app',
       items:        Array.isArray(l.items)        ? l.items.map(validateItem).filter(Boolean)        : [],
       backlogItems: Array.isArray(l.backlogItems) ? l.backlogItems.map(validateItem).filter(Boolean) : [],
     }));
