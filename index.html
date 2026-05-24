@@ -1954,7 +1954,8 @@ if (sbConfigured) {
 }
 let supabaseUser  = null;
 let supabaseToken = null;   // JWT access token used for direct REST calls
-let sbSaveTimer   = null;
+let sbSaveTimer    = null;
+let sbSaveInFlight = null;
 let authPending   = false;
 let realtimeChannel   = null;
 let realtimeReloadTimer = null;
@@ -2061,10 +2062,14 @@ function clearLocalData() {
 
 async function signOut() {
   if (!sb) return;
-  if (sbSaveTimer && supabaseUser) {
-    clearTimeout(sbSaveTimer);
-    sbSaveTimer = null;
-    await saveToSupabase();
+  if (supabaseUser) {
+    if (sbSaveTimer) {
+      clearTimeout(sbSaveTimer);
+      sbSaveTimer = null;
+      await saveToSupabase();
+    } else if (sbSaveInFlight) {
+      await sbSaveInFlight;
+    }
   }
   unsubscribeRealtime();
   await sb.auth.signOut();
@@ -2328,7 +2333,9 @@ function cloudItemToLocal(ci) {
 function scheduleSbSave() {
   if (!supabaseUser) return;
   clearTimeout(sbSaveTimer);
-  sbSaveTimer = setTimeout(saveToSupabase, 1500);
+  sbSaveTimer = setTimeout(() => {
+    sbSaveInFlight = saveToSupabase().finally(() => { sbSaveInFlight = null; });
+  }, 1500);
 }
 
 async function saveToSupabase() {
@@ -2451,7 +2458,7 @@ async function refreshShareModal() {
       ? members.map(m => `
           <div class="share-member-row">
             <span class="share-member-email">${esc(m.email || 'Unknown')}</span>
-            <button class="share-member-remove" onclick="removeMember('${m.user_id}')">Remove</button>
+            <button class="share-member-remove" onclick="removeMember('${esc(m.user_id)}')">Remove</button>
           </div>`).join('')
       : '<div class="share-empty">No one else has access yet.</div>'
     }`;
@@ -4216,11 +4223,11 @@ function msUntilNextOccurrence(targetDay) {
   const now = new Date();
   const resetTime = new Date(now);
   let daysAhead = (targetDay - now.getDay() + 7) % 7;
-  if (daysAhead === 0 && (now.getHours() > 0 || now.getMinutes() >= 1)) {
-    daysAhead = 7;
-  }
   resetTime.setDate(now.getDate() + daysAhead);
   resetTime.setHours(0, 1, 0, 0);
+  if (resetTime <= now) {
+    resetTime.setDate(resetTime.getDate() + 7);
+  }
   return resetTime.getTime() - now.getTime();
 }
 
@@ -4239,7 +4246,7 @@ function checkOverdueResets() {
       const completedAt = it.completedAt || 0;
       if (completedAt < todayReset.getTime()) {
         it.done = false;
-        it.subtasks.forEach(s => s.done = false);
+        (it.subtasks || []).forEach(s => s.done = false);
         it.completedAt = null;
         changed = true;
       }
@@ -4271,7 +4278,7 @@ function scheduleRepeatResets() {
         const targetItem = (targetList.items || []).find(i => i.id === it.id);
         if (!targetItem || !targetItem.done) return;
         targetItem.done = false;
-        targetItem.subtasks.forEach(s => s.done = false);
+        (targetItem.subtasks || []).forEach(s => s.done = false);
         targetItem.completedAt = null;
         save();
         if (list.id === activeListId) { syncFromList(); render(); }
