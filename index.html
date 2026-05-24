@@ -593,14 +593,13 @@ body {
 .item-text {
   font-size: 14px; color: var(--text-primary); position: relative;
   white-space: normal; overflow: visible; text-overflow: unset;
-  display: block; transition: color 0.22s; word-break: break-word;
+  display: block; transition: color 0.22s, text-decoration-color 0.3s ease;
+  word-break: break-word; text-decoration: line-through; text-decoration-color: transparent;
 }
-.item.done .item-text { color: var(--text-disabled); }
+.item.done .item-text { color: var(--text-disabled); text-decoration-color: var(--text-disabled); }
 .item-sub-hint { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
 .progress-row { height: 2px; background: rgba(255,255,255,0.07); margin: 0 12px 8px; border-radius: 2px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--fig-purple), var(--fig-blue)); transition: width 0.35s ease; border-radius: 2px; }
-.strikethrough { position: absolute; left: 0; right: 100%; top: 50%; height: 1.5px; background: var(--text-disabled); transition: right 0.3s ease; border-radius: 1px; }
-.item.done .strikethrough { right: 0; }
 .picked-star { font-size: 13px; flex-shrink: 0; }
 .expand-btn {
   flex-shrink: 0; width: 44px; height: 44px; border: none; background: none; cursor: pointer;
@@ -654,9 +653,8 @@ body {
 .subitem.sub-drag-over-below { border-bottom: 2px solid var(--fig-purple); }
 .sub-checkmark { position: absolute; width: 8px; height: 8px; opacity: 0; transition: opacity 0.15s; }
 .subitem.done .sub-checkmark { opacity: 1; }
-.subitem-text { flex: 1; font-size: 13px; color: var(--text-secondary); position: relative; white-space: normal; overflow: visible; text-overflow: unset; transition: color 0.22s; word-break: break-word; }
-.subitem.done .subitem-text { color: var(--text-disabled); }
-.subitem .strikethrough { background: var(--text-disabled); }
+.subitem-text { flex: 1; font-size: 13px; color: var(--text-secondary); position: relative; white-space: normal; overflow: visible; text-overflow: unset; transition: color 0.22s, text-decoration-color 0.3s ease; word-break: break-word; text-decoration: line-through; text-decoration-color: transparent; }
+.subitem.done .subitem-text { color: var(--text-disabled); text-decoration-color: var(--text-disabled); }
 .sub-icon-btn {
   width: 44px; height: 44px; border: none; background: none; cursor: pointer;
   border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
@@ -3220,7 +3218,7 @@ function render() {
                <button class="edit-confirm" onclick="event.stopPropagation();confirmSubEdit('${item.id}','${sub.id}')">✓</button>
                <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
              </div>`
-          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
+          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}</span>`;
         const subEditBtn = !isEditingSub
           ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-secondary)">
                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
@@ -3293,7 +3291,7 @@ function render() {
            <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
          </div>`
       : `<div class="item-body">
-           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}<span class="strikethrough"></span></span>
+           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}</span>
            ${subHint}
          </div>`;
 
@@ -3637,7 +3635,7 @@ function renderBacklog() {
            <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
          </div>`
       : `<div class="item-body">
-           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}<span class="strikethrough"></span></span>
+           <span class="item-text" ondblclick="event.stopPropagation();startEdit('${item.id}')">${esc(item.text)}</span>
            ${subHint}
          </div>`;
 
@@ -3682,7 +3680,7 @@ function renderBacklog() {
                <button class="edit-confirm" onclick="event.stopPropagation();confirmSubEdit('${item.id}','${sub.id}')">✓</button>
                <button class="edit-cancel" onclick="event.stopPropagation();cancelEdit()">×</button>
              </div>`
-          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}<span class="strikethrough"></span></span>`;
+          : `<span class="subitem-text" ondblclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')">${esc(sub.text)}</span>`;
         const subEditBtn = !isEditingSub
           ? `<button class="sub-icon-btn" onclick="event.stopPropagation();startSubEdit('${item.id}','${sub.id}')" style="color:var(--text-secondary)">
                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
