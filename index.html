@@ -813,8 +813,12 @@ body {
 .drawer-list-icon {
   width: 32px; height: 32px; border-radius: var(--radius-s);
   background: var(--fig-purple); display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 14px;
+  flex-shrink: 0; font-size: 18px;
 }
+button.drawer-list-icon {
+  border: none; cursor: pointer; padding: 0; transition: transform 0.15s;
+}
+button.drawer-list-icon:active { transform: scale(0.88); }
 .drawer-list-item.active .drawer-list-icon { box-shadow: 0 0 0 2px rgba(162,89,255,0.4); }
 
 .drawer-list-info { flex: 1; min-width: 0; }
@@ -1133,6 +1137,52 @@ body {
   padding: 12px 12px 4px;
 }
 .drawer-list-item.shared-list .drawer-drag-handle { visibility: hidden; }
+
+/* ── Hamburger button ── */
+.hamburger-btn {
+  width: 44px; height: 44px; border: none; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); flex-shrink: 0; transition: background 0.13s, color 0.13s;
+}
+.hamburger-btn:active { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+/* ── Drawer header with logo ── */
+.drawer-header-left { display: flex; align-items: center; gap: 10px; }
+
+/* ── Icon picker modal ── */
+.icon-picker-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.92);
+  width: calc(100% - 48px); max-width: 320px;
+  background: var(--surface-raised); border-radius: 20px;
+  border: 1px solid var(--border); z-index: 201;
+  padding: 24px 20px 20px; opacity: 0; pointer-events: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.icon-picker-modal.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+.icon-picker-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+.icon-picker-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 14px;
+}
+.icon-picker-btn {
+  height: 38px; border: 1.5px solid transparent; background: none; cursor: pointer;
+  border-radius: var(--radius-s); display: flex; align-items: center; justify-content: center;
+  font-size: 20px; transition: background 0.1s;
+}
+.icon-picker-btn:active { background: var(--surface-hover); }
+.icon-picker-btn.selected { background: var(--primary-dim); border-color: rgba(162,89,255,0.5); }
+.icon-picker-label {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
+}
+.icon-picker-input {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface-input); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m); padding: 9px 12px;
+  font-size: 22px; color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif; outline: none; text-align: center;
+}
+.icon-picker-input:focus { border-color: var(--fig-purple); }
+.icon-picker-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
 </style>
 <script>
 (function() {
@@ -1208,11 +1258,40 @@ body {
   </div>
 </div>
 
+<!-- Icon picker modal -->
+<div class="icon-picker-modal" id="icon-picker-modal">
+  <div class="icon-picker-title">Choose an icon</div>
+  <div class="icon-picker-grid" id="icon-picker-grid"></div>
+  <div class="icon-picker-label">Or type any emoji</div>
+  <input class="icon-picker-input" id="icon-picker-input" placeholder="😀" maxlength="4" autocomplete="off" autocorrect="off">
+  <div class="icon-picker-actions">
+    <button class="delete-modal-cancel" onclick="closeIconPicker()">Done</button>
+  </div>
+</div>
+
 <!-- Side drawer -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
-    <span class="drawer-title">My Lists</span>
+    <div class="drawer-header-left">
+      <svg width="26" height="26" viewBox="181.5 14.5 308 308" fill="none">
+        <g transform="rotate(-6, 340, 210)">
+          <rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/>
+          <rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/>
+          <rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/>
+          <rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/>
+          <circle cx="278" cy="148" r="5" fill="white"/>
+          <line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="278" cy="175" r="5" fill="white"/>
+          <line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="278" cy="202" r="5" fill="white"/>
+          <line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="278" cy="229" r="5" fill="white"/>
+          <line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <span class="drawer-title">My Lists</span>
+    </div>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
   <div class="drawer-lists" id="drawer-lists"></div>
@@ -1227,23 +1306,11 @@ body {
   <div class="card">
     <div class="top-bar">
       <div class="top-bar-left">
-        <!-- Clickable logo opens drawer -->
-        <button class="logo-btn" onclick="openDrawer()" title="My lists" aria-label="Open lists">
-          <svg class="logo-mark" viewBox="181.5 14.5 308 308" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g transform="rotate(-6, 340, 210)">
-              <rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/>
-              <rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/>
-              <rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/>
-              <rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/>
-              <circle cx="278" cy="148" r="5" fill="white"/>
-              <line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/>
-              <circle cx="278" cy="175" r="5" fill="white"/>
-              <line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/>
-              <circle cx="278" cy="202" r="5" fill="white"/>
-              <line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/>
-              <circle cx="278" cy="229" r="5" fill="white"/>
-              <line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/>
-            </g>
+        <button class="hamburger-btn" onclick="openDrawer()" aria-label="Open lists">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor">
+            <rect width="18" height="2" rx="1"/>
+            <rect y="6" width="18" height="2" rx="1"/>
+            <rect y="12" width="18" height="2" rx="1"/>
           </svg>
         </button>
         <div style="min-width:0">
@@ -2071,7 +2138,7 @@ function handleNewSignIn(user) {
 }
 
 function clearLocalData() {
-  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
   activeListId = lists[0].id;
   localStorage.removeItem(LISTS_KEY);
   localStorage.removeItem(ACTIVE_LIST_KEY);
@@ -2145,7 +2212,7 @@ async function deleteAccount() {
   supabaseUser = null;
   supabaseToken = null;
   localStorage.clear();
-  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
   activeListId = lists[0].id;
   save();
   render();
@@ -2653,6 +2720,10 @@ function updateHeaderActions() {
 }
 
 // ── Multi-list state ───────────────────────────────────────────────────────
+const APP_ICON_SVG_MINI = `<svg width="26" height="26" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#1E1E1E"/><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+const ICON_PRESETS = ['📝','📋','✅','🎯','🏠','💼','🛒','📚','💡','🔥','⭐','🎉','💪','🎨','🌟','🍕','💻','🌱','🎵','🧘'];
+let pickerListId = null;
+
 let lists = [];
 let activeListId = null;
 let pendingDeleteListId = null;
@@ -2716,13 +2787,13 @@ function load() {
     }
 
     if (!lists || lists.length === 0) {
-      lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+      lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
     }
 
     activeListId = savedActiveId ? (safeId(savedActiveId) ?? lists[0].id) : lists[0].id;
     if (!lists.find(l => l.id === activeListId)) activeListId = lists[0].id;
   } catch(e) {
-    lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [] }];
+    lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
     activeListId = lists[0].id;
   }
 
@@ -2893,7 +2964,7 @@ function switchList(id) {
 
 function createNewList() {
   syncToList();
-  const newList = { id: mkId(), name: 'New List', items: [], backlogItems: [], role: 'owner' };
+  const newList = { id: mkId(), name: 'New List', items: [], backlogItems: [], role: 'owner', icon: 'app' };
   lists.push(newList);
   activeListId = newList.id;
   syncFromList();
@@ -2971,19 +3042,18 @@ function closeDrawer() {
 }
 
 function renderDrawerListItem(list) {
-  const active   = (list.items || []).filter(i => !i.done).length;
-  const isActive = list.id === activeListId;
-  const isOwner  = !list.role || list.role === 'owner';
+  const active     = (list.items || []).filter(i => !i.done).length;
+  const isActive   = list.id === activeListId;
+  const isOwner    = !list.role || list.role === 'owner';
   const ownedCount = lists.filter(l => !l.role || l.role === 'owner').length;
   const canDelete  = isOwner && ownedCount > 1;
-  const listIconSvg = `<svg width="14" height="14" viewBox="0 0 28 28" fill="none">
-    <rect x="3" y="4" width="9" height="9" rx="2" fill="rgba(255,255,255,0.3)"/>
-    <polyline points="4.2,8.5 6,10.5 9.5,6.5" stroke="#0ACF83" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="16" y="6" width="9" height="2" rx="1" fill="rgba(255,255,255,0.6)"/>
-    <rect x="3" y="16" width="9" height="9" rx="2" fill="rgba(255,255,255,0.3)"/>
-    <polyline points="4.2,20.5 6,22.5 9.5,18.5" stroke="#0ACF83" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="16" y="18" width="7" height="2" rx="1" fill="rgba(255,255,255,0.4)"/>
-  </svg>`;
+  const icon       = list.icon || 'app';
+  const isAppIcon  = icon === 'app';
+  const iconContent = isAppIcon ? APP_ICON_SVG_MINI : esc(icon);
+  const iconStyle   = isAppIcon ? 'background:transparent;padding:3px' : '';
+  const iconEl = isOwner
+    ? `<button class="drawer-list-icon" style="${iconStyle}" onclick="event.stopPropagation();openIconPicker('${list.id}')" aria-label="Change icon">${iconContent}</button>`
+    : `<div class="drawer-list-icon" style="${iconStyle}">${iconContent}</div>`;
   return `
     <div class="drawer-list-item${isActive ? ' active' : ''}${isOwner ? '' : ' shared-list'}"
          data-list-id="${list.id}" ${isOwner ? 'draggable="true"' : ''}
@@ -2996,7 +3066,7 @@ function renderDrawerListItem(list) {
           <circle cx="3" cy="14" r="1.5"/><circle cx="7" cy="14" r="1.5"/>
         </svg>
       </div>
-      <div class="drawer-list-icon">${listIconSvg}</div>
+      ${iconEl}
       <div class="drawer-list-info">
         <div class="drawer-list-name">${esc(list.name)}</div>
         <div class="drawer-list-count">${active} active</div>
@@ -3019,6 +3089,47 @@ function renderDrawer() {
   }
   container.innerHTML = html;
   initListDragListeners();
+}
+
+// ── List icon picker ───────────────────────────────────────────────────────
+function openIconPicker(listId) {
+  pickerListId = listId;
+  const list = lists.find(l => l.id === listId);
+  if (!list) return;
+  const currentIcon = list.icon || 'app';
+
+  const appIconSvg = `<svg width="22" height="22" viewBox="0 0 512 512" fill="none"><rect width="512" height="512" rx="112" fill="#1E1E1E"/><g transform="rotate(-6, 340, 210)"><rect x="258" y="84" width="180" height="222" rx="22" fill="#4c1d95" opacity="0.3"/><rect x="250" y="76" width="180" height="222" rx="20" fill="#7c3aed"/><rect x="285" y="64" width="110" height="26" rx="5" fill="#a78bfa"/><rect x="315" y="39" width="50" height="28" rx="4" fill="none" stroke="#a78bfa" stroke-width="12"/><circle cx="278" cy="148" r="5" fill="white"/><line x1="292" y1="148" x2="390" y2="148" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="175" r="5" fill="white"/><line x1="292" y1="175" x2="375" y2="175" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="202" r="5" fill="white"/><line x1="292" y1="202" x2="385" y2="202" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="278" cy="229" r="5" fill="white"/><line x1="292" y1="229" x2="368" y2="229" stroke="white" stroke-width="5" stroke-linecap="round"/></g></svg>`;
+
+  let gridHtml = `<button class="icon-picker-btn${currentIcon === 'app' ? ' selected' : ''}" onclick="setListIcon('${listId}','app')" aria-label="App icon">${appIconSvg}</button>`;
+  gridHtml += ICON_PRESETS.map(e =>
+    `<button class="icon-picker-btn${currentIcon === e ? ' selected' : ''}" onclick="setListIcon('${listId}','${e}')">${e}</button>`
+  ).join('');
+  document.getElementById('icon-picker-grid').innerHTML = gridHtml;
+
+  const input = document.getElementById('icon-picker-input');
+  input.value = currentIcon === 'app' ? '' : currentIcon;
+  input.oninput = () => {
+    const chars = [...input.value];
+    if (chars.length) setListIcon(listId, chars.slice(0, 2).join(''), true);
+  };
+
+  document.getElementById('icon-picker-modal').classList.add('open');
+  openModal();
+}
+
+function closeIconPicker() {
+  document.getElementById('icon-picker-modal').classList.remove('open');
+  closeModal();
+  pickerListId = null;
+}
+
+function setListIcon(listId, icon, keepOpen) {
+  const list = lists.find(l => l.id === listId);
+  if (!list || list.role === 'editor') return;
+  list.icon = icon;
+  save();
+  renderDrawer();
+  if (!keepOpen) closeIconPicker();
 }
 
 // ── Drawer list drag-to-reorder ────────────────────────────────────────────
