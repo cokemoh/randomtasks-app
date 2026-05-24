@@ -46,7 +46,10 @@ export default async function handler(request, context) {
   const ownerPossessive = ownerName ? `${ownerName}'s` : `someone's`;
   const title = esc(`Join ${ownerPossessive} list: "${listName}"`);
   const desc  = esc(`You've been invited to collaborate on "${listName}" in randomtasks.`);
-  const pageUrl = esc(url.toString());
+  const canonical = new URL(url);
+  canonical.host = 'randomtask.app';
+  canonical.protocol = 'https:';
+  const pageUrl = esc(canonical.toString());
 
   const ogTags = `
   <meta property="og:title" content="${title}">
