@@ -1111,6 +1111,20 @@ body {
 }
 .delete-modal-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
 
+/* ── Confirm delete list modal ── */
+.confirm-delete-list-modal {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.92);
+  width: calc(100% - 48px); max-width: 360px;
+  background: var(--surface-raised); border-radius: 20px;
+  border: 1px solid var(--border); z-index: 201;
+  padding: 28px 24px; opacity: 0; pointer-events: none;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.confirm-delete-list-modal.open { transform: translate(-50%,-50%) scale(1); opacity: 1; pointer-events: all; }
+.confirm-delete-list-modal-title { font-size: 17px; font-weight: 600; color: var(--fig-red); margin-bottom: 8px; }
+.confirm-delete-list-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px; }
+.confirm-delete-list-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
 /* ── Drawer shared-list section ── */
 .drawer-section-label {
   font-size: 11px; font-weight: 600; color: var(--text-disabled);
@@ -1180,6 +1194,16 @@ body {
   <div class="delete-modal-actions">
     <button class="delete-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
     <button class="delete-modal-confirm" id="delete-modal-confirm" onclick="deleteAccount()" disabled>Delete everything</button>
+  </div>
+</div>
+
+<!-- Confirm delete list modal -->
+<div class="confirm-delete-list-modal" id="confirm-delete-list-modal">
+  <div class="confirm-delete-list-modal-title">Delete list?</div>
+  <div class="confirm-delete-list-modal-body" id="confirm-delete-list-modal-body"></div>
+  <div class="confirm-delete-list-modal-actions">
+    <button class="delete-modal-cancel" onclick="cancelConfirmDeleteList()">No, go back</button>
+    <button class="delete-modal-confirm" onclick="confirmDeleteList()">Yes, delete</button>
   </div>
 </div>
 
@@ -2630,6 +2654,7 @@ function updateHeaderActions() {
 // ── Multi-list state ───────────────────────────────────────────────────────
 let lists = [];
 let activeListId = null;
+let pendingDeleteListId = null;
 let _bootActiveListId = null; // saved once at boot before any save() can overwrite it
 
 function currentList() { return lists.find(l => l.id === activeListId) || lists[0]; }
@@ -2890,11 +2915,30 @@ function renameCurrentList(name) {
   renderDrawer();
 }
 
-async function deleteList(id) {
+function openConfirmDeleteList(id) {
   const list = lists.find(l => l.id === id);
   if (!list || list.role === 'editor') return;
   const ownedLists = lists.filter(l => !l.role || l.role === 'owner');
   if (ownedLists.length <= 1) return;
+  pendingDeleteListId = id;
+  const body = document.getElementById('confirm-delete-list-modal-body');
+  if (body) body.textContent = `"${list.name}" and all its tasks will be permanently deleted. This cannot be undone.`;
+  document.getElementById('confirm-delete-list-modal').classList.add('open');
+  openModal();
+}
+
+function cancelConfirmDeleteList() {
+  pendingDeleteListId = null;
+  document.getElementById('confirm-delete-list-modal').classList.remove('open');
+  closeModal();
+}
+
+async function confirmDeleteList() {
+  const id = pendingDeleteListId;
+  cancelConfirmDeleteList();
+  if (!id) return;
+  const list = lists.find(l => l.id === id);
+  if (!list) return;
   lists = lists.filter(l => l.id !== id);
   if (activeListId === id) {
     activeListId = lists[0].id;
@@ -2956,7 +3000,7 @@ function renderDrawerListItem(list) {
         <div class="drawer-list-name">${esc(list.name)}</div>
         <div class="drawer-list-count">${active} active</div>
       </div>
-      ${canDelete ? `<button class="drawer-list-delete" onclick="event.stopPropagation();deleteList('${list.id}')" aria-label="Delete list">
+      ${canDelete ? `<button class="drawer-list-delete" onclick="event.stopPropagation();openConfirmDeleteList('${list.id}')" aria-label="Delete list">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
       </button>` : ''}
     </div>`;
