@@ -12,6 +12,7 @@ export default async function handler(request, context) {
   if (!token) return context.next();
 
   let listName = 'a list';
+  let ownerName = '';
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/lookup_share_token`, {
       method: 'POST',
@@ -23,7 +24,10 @@ export default async function handler(request, context) {
       body: JSON.stringify({ p_token: token }),
     });
     const rows = await res.json();
-    if (rows?.length) listName = rows[0].name;
+    if (rows?.length) {
+      listName  = rows[0].name;
+      ownerName = rows[0].owner_name || '';
+    }
   } catch (_) {}
 
   if (listName === 'a list') {
@@ -39,7 +43,8 @@ export default async function handler(request, context) {
     } catch (_) {}
   }
 
-  const title = esc(`Join my ${listName} list`);
+  const ownerPossessive = ownerName ? `${ownerName}'s` : `someone's`;
+  const title = esc(`Join ${ownerPossessive} list: "${listName}"`);
   const desc  = esc(`You've been invited to collaborate on "${listName}" in randomtasks.`);
   const pageUrl = esc(url.toString());
 
