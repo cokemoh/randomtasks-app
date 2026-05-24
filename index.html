@@ -2361,8 +2361,10 @@ async function loadFromSupabase() {
       lists = cloudLists.map(cl => {
         const li   = (cloudItems || []).filter(i => i.list_id === cl.id);
         const role = cl.owner_id === supabaseUser.id ? 'owner' : 'editor';
+        const prev = lists.find(l => l.id === cl.id);
         return {
           id: cl.id, name: cl.name,
+          icon: prev?.icon || 'app',
           share_token: role === 'owner' ? (cl.share_token || null) : null,
           shared: role === 'owner' ? ownerSharedIds.has(cl.id) : false,
           role,
@@ -3060,7 +3062,7 @@ function renderDrawerListItem(list) {
   const icon       = list.icon || 'app';
   const isAppIcon  = icon === 'app';
   const iconContent = isAppIcon ? APP_ICON_SVG_MINI : esc(icon);
-  const iconStyle   = isAppIcon ? 'background:transparent' : '';
+  const iconStyle   = 'background:transparent';
   const iconEl = isOwner
     ? `<button class="drawer-list-icon" style="${iconStyle}" onclick="event.stopPropagation();openIconPicker('${list.id}')" aria-label="Change icon">${iconContent}</button>`
     : `<div class="drawer-list-icon" style="${iconStyle}">${iconContent}</div>`;
