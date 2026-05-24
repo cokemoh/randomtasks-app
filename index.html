@@ -3261,7 +3261,7 @@ function render() {
     const progressHtml = (hasSubs && !isDone) ? `<div class="progress-row"><div class="progress-fill" style="width:${pct}%"></div></div>` : '';
 
     // Expand/add-sub btn — shows + chevron when no subtasks (opens add input), expand chevron when subtasks exist
-    const expandHtml = !isDone
+    const expandHtml = (!isDone && !isEditing)
       ? (hasSubs || item.addingSubtask)
         ? `<button class="expand-btn${item.expanded ? ' open' : ''}" onclick="event.stopPropagation();toggleExpand('${item.id}')" aria-label="${item.expanded ? 'Collapse' : 'Expand'} subtasks">
              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
@@ -3632,7 +3632,7 @@ function renderBacklog() {
            ${subHint}
          </div>`;
 
-    const expandHtml = !isDone
+    const expandHtml = (!isDone && !isEditing)
       ? (hasSubs || item.addingSubtask)
         ? `<button class="expand-btn${item.expanded ? ' open' : ''}" onclick="event.stopPropagation();toggleBacklogExpand('${item.id}')" aria-label="${item.expanded ? 'Collapse' : 'Expand'} subtasks">
              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
