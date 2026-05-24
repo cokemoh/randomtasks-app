@@ -447,6 +447,7 @@ body {
   border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   transition: border-color 0.18s, background 0.18s; position: relative;
 }
+.item:not(.done) .checkbox { display: none; }
 .item.done .checkbox { border-color: var(--fig-green); background: var(--fig-green); }
 .checkmark { position: absolute; width: 10px; height: 10px; opacity: 0; transition: opacity 0.15s; }
 .item.done .checkmark { opacity: 1; }
