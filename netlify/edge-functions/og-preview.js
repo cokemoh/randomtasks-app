@@ -104,11 +104,11 @@ export default async function handler(request, context) {
   const title = esc(`Join ${ownerPossessive} list: "${listName}"`);
   const desc  = esc(`You've been invited to collaborate on "${listName}" in randomtasks.`);
   const canonical = new URL(url);
-  canonical.host = 'randomtask.app';
+  canonical.host = 'randomtasks.app';
   canonical.protocol = 'https:';
   const pageUrl = esc(canonical.toString());
 
-  const ogImage = esc(`https://randomtask.app/og-image?token=${encodeURIComponent(token)}`);
+  const ogImage = esc(`https://randomtasks.app/og-image?token=${encodeURIComponent(token)}`);
   const ogTags = `
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
