@@ -70,6 +70,8 @@ export default async function handler(request, context) {
   const modified = html.replace('<head>', `<head>${ogTags}`);
 
   const headers = new Headers(response.headers);
-  headers.delete('content-length'); // body length changed after injection
+  headers.delete('content-length');   // body length changed after injection
+  headers.delete('content-encoding'); // body was decompressed by response.text(); remove stale gzip hint
+  headers.delete('transfer-encoding');
   return new Response(modified, { status: response.status, headers });
 }
