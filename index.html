@@ -3818,6 +3818,7 @@ function safeId(val) {
 
 let dragSrcId = null;
 let dragSrcSection = null; // 'active' or 'backlog'
+let dragHoverCat = null;   // category name currently hovered during drag
 
 function getSectionForId(id) {
   if (items.find(i => i.id === id)) return 'active';
@@ -3848,7 +3849,7 @@ function initDragListeners() {
 
     el.addEventListener('dragend', () => {
       stopAutoScroll();
-      dragSrcId = null; dragSrcSection = null;
+      dragSrcId = null; dragSrcSection = null; dragHoverCat = null;
       document.querySelectorAll('.task-block').forEach(b =>
         b.classList.remove('dragging', 'drag-over-above', 'drag-over-below')
       );
@@ -3870,9 +3871,11 @@ function initDragListeners() {
       );
       if (catRow && dragSrcId && dragSrcSection === section) {
         catRow.classList.add('cat-drop-active');
+        dragHoverCat = catRow.dataset.category;
         el.classList.remove('drop-active');
         return;
       }
+      dragHoverCat = null;
 
       const block = e.target.closest('.task-block[draggable="true"]');
       // Highlight the zone if dragging from another section and no block target
@@ -3890,6 +3893,7 @@ function initDragListeners() {
       if (!el.contains(e.relatedTarget)) {
         el.classList.remove('drop-active');
         clearCatDropHighlights();
+        dragHoverCat = null;
         stopAutoScroll();
       }
       const block = e.target.closest('.task-block');
@@ -3904,10 +3908,13 @@ function initDragListeners() {
       if (!dragSrcId) return;
       const targetSection = section;
 
-      // Drop onto a category header — assign that category
+      // Drop onto a category header — use tracked hover cat as primary signal
       const catRow = e.target.closest('.cat-label-row[data-category]');
-      if (catRow && dragSrcSection === section) {
-        assignItemCategory(dragSrcId, section, catRow.dataset.category);
+      const catTarget = (catRow && dragSrcSection === section) ? catRow.dataset.category : null;
+      const resolvedCat = catTarget || (dragHoverCat && dragSrcSection === section ? dragHoverCat : null);
+      if (resolvedCat) {
+        assignItemCategory(dragSrcId, section, resolvedCat);
+        dragHoverCat = null;
         return;
       }
 
@@ -4510,8 +4517,11 @@ function onTouchMove(e) {
   touchClone.style.top = (y - touchOffsetY) + 'px';
   autoScroll(y);
   document.querySelectorAll('.task-block').forEach(b => b.classList.remove('drag-over-above', 'drag-over-below'));
+  document.querySelectorAll('.cat-label-row.cat-drop-active').forEach(r => r.classList.remove('cat-drop-active'));
   const el = document.elementFromPoint(x, y);
   if (!el) return;
+  const catRow = el.closest('.cat-label-row[data-category]');
+  if (catRow) { catRow.classList.add('cat-drop-active'); return; }
   const block = el.closest('.task-block[draggable="true"]');
   if (!block || safeId(block.dataset.id) === touchDragId) return;
   const rect = block.getBoundingClientRect();
@@ -4525,6 +4535,7 @@ function onTouchEnd(e) {
   const srcBlock = document.getElementById(`task-${touchDragId}`);
   if (srcBlock) srcBlock.classList.remove('dragging');
   document.querySelectorAll('.task-block').forEach(b => b.classList.remove('drag-over-above', 'drag-over-below'));
+  document.querySelectorAll('.cat-label-row.cat-drop-active').forEach(r => r.classList.remove('cat-drop-active'));
   document.getElementById('list-container')?.classList.remove('drop-active');
   document.getElementById('backlog-list')?.classList.remove('drop-active');
 
@@ -4532,11 +4543,14 @@ function onTouchEnd(e) {
   const x = e.changedTouches[0].clientX;
   const el = document.elementFromPoint(x, y);
   if (el) {
+    const catRow = el.closest('.cat-label-row[data-category]');
     const block = el.closest('.task-block[draggable="true"]');
     const backlogZone = el.closest('#backlog-list');
     const activeZone  = el.closest('#list-container');
     const toSection = backlogZone ? 'backlog' : 'active';
-    if (block && safeId(block.dataset.id) !== touchDragId) {
+    if (catRow && dragSrcSection === toSection) {
+      assignItemCategory(touchDragId, toSection, catRow.dataset.category);
+    } else if (block && safeId(block.dataset.id) !== touchDragId) {
       const targetId = safeId(block.dataset.id);
       if (targetId !== null) {
         const rect = block.getBoundingClientRect();
