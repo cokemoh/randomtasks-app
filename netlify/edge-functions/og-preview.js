@@ -69,8 +69,7 @@ export default async function handler(request, context) {
   const html = await response.text();
   const modified = html.replace('<head>', `<head>${ogTags}`);
 
-  return new Response(modified, {
-    status: response.status,
-    headers: response.headers,
-  });
+  const headers = new Headers(response.headers);
+  headers.delete('content-length'); // body length changed after injection
+  return new Response(modified, { status: response.status, headers });
 }
