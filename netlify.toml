@@ -1,3 +1,7 @@
 [[edge_functions]]
+  path = "/og-image"
+  function = "og-image"
+
+[[edge_functions]]
   path = "/*"
   function = "og-preview"

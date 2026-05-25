@@ -51,14 +51,19 @@ export default async function handler(request, context) {
   canonical.protocol = 'https:';
   const pageUrl = esc(canonical.toString());
 
+  const ogImage = esc(`https://randomtask.app/og-image?token=${encodeURIComponent(token)}`);
   const ogTags = `
   <meta property="og:title" content="${title}">
   <meta property="og:description" content="${desc}">
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:site_name" content="randomtasks">
+  <meta property="og:image" content="${ogImage}">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${desc}">`;
+  <meta name="twitter:description" content="${desc}">
+  <meta name="twitter:image" content="${ogImage}">`;
 
   const response = await context.next();
   const html = await response.text();
