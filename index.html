@@ -1199,19 +1199,28 @@ button.drawer-list-icon:active { transform: scale(0.88); }
 /* ── Category labels ── */
 .cat-label-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px 3px; margin-top: 2px;
+  padding: 5px 12px; margin: 2px 0;
+  background: rgba(162,89,255,0.1);
+  border: 1px solid rgba(162,89,255,0.2);
+  border-radius: var(--radius-m);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.cat-label-row.cat-drop-active {
+  background: rgba(162,89,255,0.22);
+  border-color: rgba(162,89,255,0.5);
+  box-shadow: 0 0 0 1px rgba(162,89,255,0.2);
 }
 .cat-label-text {
   font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
-  text-transform: uppercase; color: var(--text-secondary);
+  text-transform: uppercase; color: #B982FF;
 }
 .cat-del-btn {
   background: none; border: none; cursor: pointer;
-  color: var(--text-disabled); font-size: 15px; line-height: 1;
-  padding: 2px 6px; border-radius: var(--radius-s);
+  color: rgba(162,89,255,0.4); font-size: 15px; line-height: 1;
+  padding: 2px 4px; border-radius: var(--radius-s);
   transition: color 0.13s;
 }
-.cat-del-btn:active { color: var(--fig-red); }
+.cat-del-btn:active { color: #B982FF; }
 .add-cat-btn {
   background: none; border: none; cursor: pointer;
   font-family: 'Inter', sans-serif;
@@ -1247,32 +1256,6 @@ button.drawer-list-icon:active { transform: scale(0.88); }
   background: none; border: none; cursor: pointer;
   color: var(--text-disabled); font-size: 20px; padding: 2px 4px; line-height: 1;
 }
-.cat-picker-row {
-  padding: 6px 12px 8px 44px;
-  border-top: 1px solid var(--border);
-  background: rgba(162,89,255,0.04);
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-}
-.cat-pick-label {
-  font-size: 10px; color: var(--text-disabled); font-weight: 500;
-  white-space: nowrap;
-}
-.cat-pick-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-full);
-  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
-  color: var(--text-secondary); padding: 3px 10px; cursor: pointer;
-  transition: background 0.13s, color 0.13s, border-color 0.13s;
-  white-space: nowrap;
-}
-.cat-pick-btn.active {
-  background: rgba(162,89,255,0.18);
-  border-color: rgba(162,89,255,0.4);
-  color: #B982FF;
-}
-.cat-pick-btn:active { opacity: 0.7; }
-.icon-btn.cat-active { color: #B982FF; }
 </style>
 <script>
 (function() {
@@ -1563,8 +1546,6 @@ let backlogItems = [];
 let backlogAddOpen = false;
 let activeCategoryAddOpen = false;
 let backlogCategoryAddOpen = false;
-let categoryPickerItemId = null;
-let categoryPickerSection = null;
 
 // ── Data layer (parallel to existing state — Step 1 of Supabase refactor) ──
 // dataItems / dataBacklog hold only persisted fields (no UI state).
@@ -2924,8 +2905,6 @@ function syncFromList() {
   backlogAddOpen   = false;
   activeCategoryAddOpen  = false;
   backlogCategoryAddOpen = false;
-  categoryPickerItemId   = null;
-  categoryPickerSection  = null;
   syncDataLayer();
 }
 
@@ -3680,30 +3659,13 @@ function render() {
            ${hasRepeat ? `<span class="repeat-indicator">↻ resets on selected days</span>` : ''}
          </div>` : '';
 
-    // Category picker button and picker row
-    const hasCat = !!(item.category && activeCats.includes(item.category));
-    const catPickerOpen = (categoryPickerItemId === item.id && categoryPickerSection === 'active');
-    const catPickerHtml = (!isDone && catPickerOpen && activeCats.length > 0)
-      ? `<div class="cat-picker-row" onclick="event.stopPropagation()">
-           <span class="cat-pick-label">Category:</span>
-           <button class="cat-pick-btn${!item.category || !activeCats.includes(item.category) ? ' active' : ''}" onclick="setCategoryForItem('${item.id}','active',null)">None</button>
-           ${activeCats.map(c => `<button class="cat-pick-btn${item.category===c?' active':''}" onclick="setCategoryForItem('${item.id}','active','${esc(c)}')">${esc(c)}</button>`).join('')}
-         </div>`
-      : '';
-
-    const catBtn = (!isDone && !isEditing)
-      ? `<button class="icon-btn task-action-btn${hasCat ? ' cat-active' : ''}" onclick="event.stopPropagation();toggleCategoryPicker('${item.id}','active')" title="Category">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
-         </button>` : '';
-
     const actionBtnsHtml = (!isDone && !isEditing) ? `
       <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
       <button class="icon-btn task-action-btn${hasRepeat ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleRepeatPicker('${item.id}')" title="Repeat">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-      </button>
-      ${catBtn}` : '';
+      </button>` : '';
     const deleteBtnHtml = isEditing ? '' : `<button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteItem('${item.id}')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>`;
@@ -3737,7 +3699,6 @@ function render() {
               ${deleteBtnHtml}
             </div>
             ${repeatPickerHtml}
-            ${catPickerHtml}
             ${progressHtml}
             ${subHtml}
           </div>
@@ -3750,7 +3711,7 @@ function render() {
 
   // Render category groups
   activeCats.forEach(cat => {
-    html += `<div class="cat-label-row">
+    html += `<div class="cat-label-row" data-category="${esc(cat)}">
       <span class="cat-label-text">${esc(cat)}</span>
       <button class="cat-del-btn" onclick="event.stopPropagation();deleteActiveCategory('${esc(cat)}')">×</button>
     </div>`;
@@ -3869,6 +3830,10 @@ function initDragListeners() {
   const backlogList = document.getElementById('backlog-list');
   if (!container) return;
 
+  function clearCatDropHighlights() {
+    document.querySelectorAll('.cat-label-row.cat-drop-active').forEach(r => r.classList.remove('cat-drop-active'));
+  }
+
   function setupContainer(el, section) {
     el.addEventListener('dragstart', e => {
       const block = e.target.closest('.task-block[draggable="true"]');
@@ -3887,6 +3852,7 @@ function initDragListeners() {
       document.querySelectorAll('.task-block').forEach(b =>
         b.classList.remove('dragging', 'drag-over-above', 'drag-over-below')
       );
+      clearCatDropHighlights();
       document.getElementById('list-container').classList.remove('drop-active');
       document.getElementById('backlog-list').classList.remove('drop-active');
     });
@@ -3895,12 +3861,22 @@ function initDragListeners() {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       autoScroll(e.clientY);
-      const block = e.target.closest('.task-block[draggable="true"]');
+
+      // Category header as drop target
+      const catRow = e.target.closest('.cat-label-row[data-category]');
+      clearCatDropHighlights();
       document.querySelectorAll('.task-block').forEach(b =>
         b.classList.remove('drag-over-above', 'drag-over-below')
       );
+      if (catRow && dragSrcId && dragSrcSection === section) {
+        catRow.classList.add('cat-drop-active');
+        el.classList.remove('drop-active');
+        return;
+      }
+
+      const block = e.target.closest('.task-block[draggable="true"]');
       // Highlight the zone if dragging from another section and no block target
-      if (!block && dragSrcSection && dragSrcSection !== section) {
+      if (!block && !catRow && dragSrcSection && dragSrcSection !== section) {
         el.classList.add('drop-active');
       } else {
         el.classList.remove('drop-active');
@@ -3911,7 +3887,11 @@ function initDragListeners() {
     });
 
     el.addEventListener('dragleave', e => {
-      if (!el.contains(e.relatedTarget)) { el.classList.remove('drop-active'); stopAutoScroll(); }
+      if (!el.contains(e.relatedTarget)) {
+        el.classList.remove('drop-active');
+        clearCatDropHighlights();
+        stopAutoScroll();
+      }
       const block = e.target.closest('.task-block');
       if (block && !block.contains(e.relatedTarget))
         block.classList.remove('drag-over-above', 'drag-over-below');
@@ -3920,10 +3900,18 @@ function initDragListeners() {
     el.addEventListener('drop', e => {
       e.preventDefault();
       el.classList.remove('drop-active');
-      const block = e.target.closest('.task-block[draggable="true"]');
+      clearCatDropHighlights();
       if (!dragSrcId) return;
       const targetSection = section;
 
+      // Drop onto a category header — assign that category
+      const catRow = e.target.closest('.cat-label-row[data-category]');
+      if (catRow && dragSrcSection === section) {
+        assignItemCategory(dragSrcId, section, catRow.dataset.category);
+        return;
+      }
+
+      const block = e.target.closest('.task-block[draggable="true"]');
       if (!block) {
         // Dropped onto empty zone — move to end of that section
         if (dragSrcSection !== targetSection) moveBetweenSections(dragSrcId, dragSrcSection, targetSection, -1, true);
@@ -3953,6 +3941,7 @@ function moveBetweenSections(srcId, fromSection, toSection, targetId, insertBefo
   const srcIdx = srcList.findIndex(i => i.id === srcId);
   if (srcIdx === -1) return;
   const [moved] = srcList.splice(srcIdx, 1);
+  moved.category = null; // clear category when crossing sections
 
   if (targetId === -1) {
     destList.push(moved);
@@ -3978,13 +3967,23 @@ function reorderItems(srcId, targetId, insertBefore, section) {
 
   const srcIdx = list.findIndex(i => i.id === srcId);
   const [moved] = list.splice(srcIdx, 1);
+  const targetItem = list.find(i => i.id === targetId);
   const newTarget = list.findIndex(i => i.id === targetId);
   list.splice(insertBefore ? newTarget : newTarget + 1, 0, moved);
+
+  // Update category to match the target item's category when reordering within a section
+  if (targetItem) moved.category = targetItem.category || null;
 
   if (section === 'backlog') backlogItems = list;
   else items = [...list, ...done];
 
-  save(); render();
+  syncToList(); save(); render();
+}
+
+function assignItemCategory(itemId, section, category) {
+  const list = section === 'active' ? items : backlogItems;
+  const it = list.find(i => i.id === itemId);
+  if (it) { it.category = category || null; syncToList(); save(); render(); }
 }
 
 // ── Backlog render ─────────────────────────────────────────────────────────
@@ -4081,30 +4080,13 @@ function renderBacklog() {
 
     const hasRepeatB = item.repeat && item.repeat.length > 0;
 
-    // Category picker button and picker row
-    const hasCatB = !!(item.category && backlogCats.includes(item.category));
-    const catPickerOpenB = (categoryPickerItemId === item.id && categoryPickerSection === 'backlog');
-    const catPickerHtmlB = (!isDone && catPickerOpenB && backlogCats.length > 0)
-      ? `<div class="cat-picker-row" onclick="event.stopPropagation()">
-           <span class="cat-pick-label">Category:</span>
-           <button class="cat-pick-btn${!item.category || !backlogCats.includes(item.category) ? ' active' : ''}" onclick="setCategoryForItem('${item.id}','backlog',null)">None</button>
-           ${backlogCats.map(c => `<button class="cat-pick-btn${item.category===c?' active':''}" onclick="setCategoryForItem('${item.id}','backlog','${esc(c)}')">${esc(c)}</button>`).join('')}
-         </div>`
-      : '';
-
-    const catBtnB = (!isDone && !isEditing)
-      ? `<button class="icon-btn task-action-btn${hasCatB ? ' cat-active' : ''}" onclick="event.stopPropagation();toggleCategoryPicker('${item.id}','backlog')" title="Category">
-           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
-         </button>` : '';
-
     const actionBtnsHtmlB = (!isDone && !isEditing) ? `
       <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
       <button class="icon-btn task-action-btn${hasRepeatB ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleBacklogRepeatPicker('${item.id}')" title="Repeat">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-      </button>
-      ${catBtnB}` : '';
+      </button>` : '';
     const deleteBtnHtmlB = isEditing ? '' : `<button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteBacklogItem('${item.id}')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>`;
@@ -4204,7 +4186,6 @@ function renderBacklog() {
               ${deleteBtnHtmlB}
             </div>
             ${repeatPickerHtmlB}
-            ${catPickerHtmlB}
             ${progressHtml}
             ${subHtml}
           </div>
@@ -4225,7 +4206,7 @@ function renderBacklog() {
 
   // Render category groups
   backlogCats.forEach(cat => {
-    html += `<div class="cat-label-row">
+    html += `<div class="cat-label-row" data-category="${esc(cat)}">
       <span class="cat-label-text">${esc(cat)}</span>
       <button class="cat-del-btn" onclick="event.stopPropagation();deleteBacklogCategory('${esc(cat)}')">×</button>
     </div>`;
@@ -4329,35 +4310,6 @@ function deleteBacklogCategory(name) {
   renderBacklog();
 }
 
-function toggleCategoryPicker(itemId, section) {
-  if (categoryPickerItemId === itemId && categoryPickerSection === section) {
-    categoryPickerItemId = null;
-    categoryPickerSection = null;
-  } else {
-    categoryPickerItemId = itemId;
-    categoryPickerSection = section;
-  }
-  if (section === 'active') render(); else renderBacklog();
-}
-function setCategoryForItem(itemId, section, category) {
-  if (section === 'active') {
-    const it = items.find(i => i.id === itemId);
-    if (it) it.category = category;
-    syncToList();
-    save();
-    categoryPickerItemId = null;
-    categoryPickerSection = null;
-    render();
-  } else {
-    const it = backlogItems.find(i => i.id === itemId);
-    if (it) it.category = category;
-    syncToList();
-    save();
-    categoryPickerItemId = null;
-    categoryPickerSection = null;
-    renderBacklog();
-  }
-}
 
 // ── Backlog actions ────────────────────────────────────────────────────────
 function toggleBacklogAdd() {
