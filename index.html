@@ -1195,6 +1195,84 @@ button.drawer-list-icon:active { transform: scale(0.88); }
 .icon-picker-input:focus { border-color: var(--fig-purple); }
 .icon-picker-input:empty:not(:focus)::before { content: '😀'; color: var(--text-disabled); }
 .icon-picker-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+/* ── Category labels ── */
+.cat-label-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px 3px; margin-top: 2px;
+}
+.cat-label-text {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.cat-del-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-disabled); font-size: 15px; line-height: 1;
+  padding: 2px 6px; border-radius: var(--radius-s);
+  transition: color 0.13s;
+}
+.cat-del-btn:active { color: var(--fig-red); }
+.add-cat-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 500; color: var(--text-disabled);
+  padding: 0 14px 8px;
+  display: flex; align-items: center; gap: 4px;
+  transition: color 0.13s;
+}
+.add-cat-btn:active { color: var(--text-secondary); }
+.cat-add-row {
+  padding: 2px 10px 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.cat-add-field {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-input); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full); padding: 0 6px 0 14px; height: 36px;
+  flex: 1; transition: border-color 0.15s;
+}
+.cat-add-field:focus-within { border-color: var(--fig-purple); box-shadow: 0 0 0 2px rgba(162,89,255,0.15); }
+.cat-add-input {
+  flex: 1; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text-primary); outline: none;
+}
+.cat-add-input::placeholder { color: var(--text-disabled); }
+.cat-add-confirm {
+  width: 28px; height: 28px; background: var(--fig-purple); color: #fff;
+  border: none; border-radius: var(--radius-full); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  line-height: 1;
+}
+.cat-add-cancel {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-disabled); font-size: 20px; padding: 2px 4px; line-height: 1;
+}
+.cat-picker-row {
+  padding: 6px 12px 8px 44px;
+  border-top: 1px solid var(--border);
+  background: rgba(162,89,255,0.04);
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.cat-pick-label {
+  font-size: 10px; color: var(--text-disabled); font-weight: 500;
+  white-space: nowrap;
+}
+.cat-pick-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+  color: var(--text-secondary); padding: 3px 10px; cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  white-space: nowrap;
+}
+.cat-pick-btn.active {
+  background: rgba(162,89,255,0.18);
+  border-color: rgba(162,89,255,0.4);
+  color: #B982FF;
+}
+.cat-pick-btn:active { opacity: 0.7; }
+.icon-btn.cat-active { color: #B982FF; }
 </style>
 <script>
 (function() {
@@ -1444,6 +1522,7 @@ button.drawer-list-icon:active { transform: scale(0.88); }
           <button class="backlog-add-btn" onclick="toggleBacklogAdd()" title="Add to backlog">+</button>
         </div>
       </div>
+      <div id="backlog-cat-controls"></div>
       <div id="backlog-banner-wrap" style="display:none" class="backlog-banner-wrap">
         <div class="backlog-pick-banner">
           <div class="backlog-banner-icon">⭐</div>
@@ -1482,6 +1561,10 @@ let editingId = null;
 let editingSubId = null;
 let backlogItems = [];
 let backlogAddOpen = false;
+let activeCategoryAddOpen = false;
+let backlogCategoryAddOpen = false;
+let categoryPickerItemId = null;
+let categoryPickerSection = null;
 
 // ── Data layer (parallel to existing state — Step 1 of Supabase refactor) ──
 // dataItems / dataBacklog hold only persisted fields (no UI state).
@@ -2151,7 +2234,7 @@ function handleNewSignIn(user) {
 }
 
 function clearLocalData() {
-  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app', activeCategories: [], backlogCategories: [] }];
   activeListId = lists[0].id;
   localStorage.removeItem(LISTS_KEY);
   localStorage.removeItem(ACTIVE_LIST_KEY);
@@ -2225,7 +2308,7 @@ async function deleteAccount() {
   supabaseUser = null;
   supabaseToken = null;
   localStorage.clear();
-  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
+  lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app', activeCategories: [], backlogCategories: [] }];
   activeListId = lists[0].id;
   save();
   render();
@@ -2365,14 +2448,28 @@ async function loadFromSupabase() {
         const li   = (cloudItems || []).filter(i => i.list_id === cl.id);
         const role = cl.owner_id === supabaseUser.id ? 'owner' : 'editor';
         const prev = lists.find(l => l.id === cl.id);
+        const prevActiveItems  = (prev?.items        || []);
+        const prevBacklogItems = (prev?.backlogItems  || []);
         return {
           id: cl.id, name: cl.name,
           icon: cl.icon || prev?.icon || 'app',
           share_token: role === 'owner' ? (cl.share_token || null) : null,
           shared: role === 'owner' ? ownerSharedIds.has(cl.id) : false,
           role,
-          items:        li.filter(i => i.section === 'active').map(cloudItemToLocal),
-          backlogItems: li.filter(i => i.section === 'backlog').map(cloudItemToLocal),
+          activeCategories:  prev?.activeCategories  || [],
+          backlogCategories: prev?.backlogCategories || [],
+          items: li.filter(i => i.section === 'active').map(ci => {
+            const loc = cloudItemToLocal(ci);
+            const prevItem = prevActiveItems.find(p => p.id === ci.id);
+            loc.category = prevItem?.category ?? null;
+            return loc;
+          }),
+          backlogItems: li.filter(i => i.section === 'backlog').map(ci => {
+            const loc = cloudItemToLocal(ci);
+            const prevItem = prevBacklogItems.find(p => p.id === ci.id);
+            loc.category = prevItem?.category ?? null;
+            return loc;
+          }),
         };
       });
 
@@ -2802,7 +2899,7 @@ function load() {
     }
 
     if (!lists || lists.length === 0) {
-      lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app' }];
+      lists = [{ id: mkId(), name: 'Tasks', items: [], backlogItems: [], icon: 'app', activeCategories: [], backlogCategories: [] }];
     }
 
     activeListId = savedActiveId ? (safeId(savedActiveId) ?? lists[0].id) : lists[0].id;
@@ -2825,6 +2922,10 @@ function syncFromList() {
   editingId        = null;
   editingSubId     = null;
   backlogAddOpen   = false;
+  activeCategoryAddOpen  = false;
+  backlogCategoryAddOpen = false;
+  categoryPickerItemId   = null;
+  categoryPickerSection  = null;
   syncDataLayer();
 }
 
@@ -2979,7 +3080,7 @@ function switchList(id) {
 
 function createNewList() {
   syncToList();
-  const newList = { id: mkId(), name: 'New List', items: [], backlogItems: [], role: 'owner', icon: 'app' };
+  const newList = { id: mkId(), name: 'New List', items: [], backlogItems: [], role: 'owner', icon: 'app', activeCategories: [], backlogCategories: [] };
   lists.push(newList);
   activeListId = newList.id;
   syncFromList();
@@ -3410,10 +3511,18 @@ function render() {
   const dc = document.getElementById('done-count');
   if (dc) dc.textContent = done.length;
 
-  // Number active items
+  // Category grouping for active items
+  const activeCats = (currentList().activeCategories || []).slice().sort();
+  const unsorted = active.filter(i => !i.category || !activeCats.includes(i.category));
+  const grouped = {};
+  activeCats.forEach(cat => { grouped[cat] = active.filter(i => i.category === cat); });
+  // Build render order for numbering: unsorted first, then alphabetical category groups
+  const renderOrder = [...unsorted, ...activeCats.flatMap(cat => grouped[cat])];
+
+  // Number active items based on render order
   const nums = {};
   let n = 1;
-  ordered.forEach(it => { if (!it.done) nums[it.id] = n++; });
+  renderOrder.forEach(it => { nums[it.id] = n++; });
 
   // List — active items only
   const container = document.getElementById('list-container');
@@ -3427,11 +3536,39 @@ function render() {
       <div class="empty-text">Nothing to do</div>
       <div class="empty-sub">Add a task above to get started</div>
     </div>`;
+    html += `<div class="section-label-row" style="padding:10px 14px 2px">
+      <span class="section-label-text">Active</span>
+    </div>
+    <button class="add-cat-btn" onclick="openActiveCategoryAdd()">+ Add category</button>`;
+    if (activeCategoryAddOpen) {
+      html += `<div class="cat-add-row">
+        <div class="cat-add-field">
+          <input class="cat-add-input" id="active-cat-input" placeholder="Category name…"
+            onkeydown="handleActiveCatKey(event)"/>
+          <button class="cat-add-confirm" onclick="submitActiveCategory()">✓</button>
+        </div>
+        <button class="cat-add-cancel" onclick="closeActiveCategoryAdd()">×</button>
+      </div>`;
+    }
   } else {
-    html += `<div class="section-label">Active</div>`;
+    html += `<div class="section-label-row" style="padding:10px 14px 2px">
+      <span class="section-label-text">Active</span>
+    </div>
+    <button class="add-cat-btn" onclick="openActiveCategoryAdd()">+ Add category</button>`;
+    if (activeCategoryAddOpen) {
+      html += `<div class="cat-add-row">
+        <div class="cat-add-field">
+          <input class="cat-add-input" id="active-cat-input" placeholder="Category name…"
+            onkeydown="handleActiveCatKey(event)"/>
+          <button class="cat-add-confirm" onclick="submitActiveCategory()">✓</button>
+        </div>
+        <button class="cat-add-cancel" onclick="closeActiveCategoryAdd()">×</button>
+      </div>`;
+    }
   }
 
-  ordered.forEach((item, idx) => {
+  // Helper to render a single active item block
+  function renderActiveItem(item) {
     const totalSubs = item.subtasks.length;
     const doneSubs  = item.subtasks.filter(s => s.done).length;
     const hasSubs   = totalSubs > 0;
@@ -3543,18 +3680,35 @@ function render() {
            ${hasRepeat ? `<span class="repeat-indicator">↻ resets on selected days</span>` : ''}
          </div>` : '';
 
+    // Category picker button and picker row
+    const hasCat = !!(item.category && activeCats.includes(item.category));
+    const catPickerOpen = (categoryPickerItemId === item.id && categoryPickerSection === 'active');
+    const catPickerHtml = (!isDone && catPickerOpen && activeCats.length > 0)
+      ? `<div class="cat-picker-row" onclick="event.stopPropagation()">
+           <span class="cat-pick-label">Category:</span>
+           <button class="cat-pick-btn${!item.category || !activeCats.includes(item.category) ? ' active' : ''}" onclick="setCategoryForItem('${item.id}','active',null)">None</button>
+           ${activeCats.map(c => `<button class="cat-pick-btn${item.category===c?' active':''}" onclick="setCategoryForItem('${item.id}','active','${esc(c)}')">${esc(c)}</button>`).join('')}
+         </div>`
+      : '';
+
+    const catBtn = (!isDone && !isEditing)
+      ? `<button class="icon-btn task-action-btn${hasCat ? ' cat-active' : ''}" onclick="event.stopPropagation();toggleCategoryPicker('${item.id}','active')" title="Category">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
+         </button>` : '';
+
     const actionBtnsHtml = (!isDone && !isEditing) ? `
       <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
       <button class="icon-btn task-action-btn${hasRepeat ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleRepeatPicker('${item.id}')" title="Repeat">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-      </button>` : '';
+      </button>
+      ${catBtn}` : '';
     const deleteBtnHtml = isEditing ? '' : `<button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteItem('${item.id}')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>`;
 
-    const taskBlockHtml = `
+    return `
       <div class="task-block${pickedClass}" id="task-${item.id}" data-id="${item.id}"${!isDone ? ' draggable="true"' : ''}>
         <div class="swipe-wrap" id="sw-${item.id}">
           <div class="swipe-delete-bg" id="sdb-${item.id}">
@@ -3583,15 +3737,28 @@ function render() {
               ${deleteBtnHtml}
             </div>
             ${repeatPickerHtml}
+            ${catPickerHtml}
             ${progressHtml}
             ${subHtml}
           </div>
         </div>
       </div>`;
+  }
 
-    if (isDone) completedHtml += taskBlockHtml;
-    else html += taskBlockHtml;
+  // Render unsorted active items
+  unsorted.forEach(item => { html += renderActiveItem(item); });
+
+  // Render category groups
+  activeCats.forEach(cat => {
+    html += `<div class="cat-label-row">
+      <span class="cat-label-text">${esc(cat)}</span>
+      <button class="cat-del-btn" onclick="event.stopPropagation();deleteActiveCategory('${esc(cat)}')">×</button>
+    </div>`;
+    (grouped[cat] || []).forEach(item => { html += renderActiveItem(item); });
   });
+
+  // Render done items into completedHtml
+  done.forEach(item => { completedHtml += renderActiveItem(item); });
 
   container.innerHTML = html;
   initDragListeners();
@@ -3643,6 +3810,7 @@ function validateItem(item) {
     completedAt: typeof item.completedAt === 'number' ? item.completedAt       : null,
     repeat:      Array.isArray(item.repeat)
                    ? item.repeat.filter(d => Number.isInteger(d) && d >= 0 && d <= 6) : [],
+    category:    (typeof item.category === 'string' && item.category.length > 0) ? item.category : null,
     subtasks: Array.isArray(item.subtasks)
       ? item.subtasks
           .filter(s => s && typeof s === 'object')
@@ -3663,6 +3831,8 @@ function validateLists(raw) {
       id:   (typeof l.id === 'string' && l.id.length > 0) ? l.id : mkId(),
       name: typeof l.name === 'string' ? l.name.slice(0, 200) : 'Untitled',
       icon: typeof l.icon === 'string' ? l.icon : 'app',
+      activeCategories:  Array.isArray(l.activeCategories)  ? l.activeCategories.filter(c => typeof c === 'string')  : [],
+      backlogCategories: Array.isArray(l.backlogCategories) ? l.backlogCategories.filter(c => typeof c === 'string') : [],
       items:        Array.isArray(l.items)        ? l.items.map(validateItem).filter(Boolean)        : [],
       backlogItems: Array.isArray(l.backlogItems) ? l.backlogItems.map(validateItem).filter(Boolean) : [],
     }));
@@ -3824,6 +3994,7 @@ function renderBacklog() {
   const listEl    = document.getElementById('backlog-list');
   const addRow    = document.getElementById('backlog-add-row');
   const bannerWrap= document.getElementById('backlog-banner-wrap');
+  const catControls = document.getElementById('backlog-cat-controls');
   if (!listEl) return;
 
   rebuildDataLayer();
@@ -3832,6 +4003,25 @@ function renderBacklog() {
   if (countEl) countEl.textContent = vms.length;
   if (pickBtn) pickBtn.disabled = vms.length === 0;
   if (addRow)  addRow.style.display = backlogAddOpen ? '' : 'none';
+
+  // Update backlog-cat-controls
+  if (catControls) {
+    let catCtrlHtml = `<button class="add-cat-btn" onclick="openBacklogCategoryAdd()" style="padding:4px 14px 6px">+ Add category</button>`;
+    if (backlogCategoryAddOpen) {
+      catCtrlHtml += `<div class="cat-add-row">
+        <div class="cat-add-field">
+          <input class="cat-add-input" id="backlog-cat-input" placeholder="Category name…"
+            onkeydown="handleBacklogCatKey(event)"/>
+          <button class="cat-add-confirm" onclick="submitBacklogCategory()">✓</button>
+        </div>
+        <button class="cat-add-cancel" onclick="closeBacklogCategoryAdd()">×</button>
+      </div>`;
+    }
+    catControls.innerHTML = catCtrlHtml;
+    if (backlogCategoryAddOpen) {
+      setTimeout(() => { const el = document.getElementById('backlog-cat-input'); if (el) el.focus(); }, 30);
+    }
+  }
 
   // Banner
   const pickedBacklog = vms.find(i => i.id === pickedBacklogId);
@@ -3845,14 +4035,15 @@ function renderBacklog() {
     }
   }
 
-  if (!vms.length) {
-    listEl.innerHTML = `<div class="backlog-empty">Drag tasks here or use + to add</div>`;
-    initDragListeners();
-    return;
-  }
+  // Category grouping for backlog items
+  const backlogCats = (currentList().backlogCategories || []).slice().sort();
+  const backlogActive = vms.filter(i => !i.done);
+  const backlogUnsorted = backlogActive.filter(i => !i.category || !backlogCats.includes(i.category));
+  const backlogGrouped = {};
+  backlogCats.forEach(cat => { backlogGrouped[cat] = backlogActive.filter(i => i.category === cat); });
 
-  let html = '';
-  vms.forEach(item => {
+  // Helper to render a single backlog item block
+  function renderBacklogItem(item) {
     const isPicked  = item.id === pickedBacklogId;
     const isDone    = item.done;
     const totalSubs = item.subtasks ? item.subtasks.length : 0;
@@ -3889,13 +4080,31 @@ function renderBacklog() {
       : '';
 
     const hasRepeatB = item.repeat && item.repeat.length > 0;
+
+    // Category picker button and picker row
+    const hasCatB = !!(item.category && backlogCats.includes(item.category));
+    const catPickerOpenB = (categoryPickerItemId === item.id && categoryPickerSection === 'backlog');
+    const catPickerHtmlB = (!isDone && catPickerOpenB && backlogCats.length > 0)
+      ? `<div class="cat-picker-row" onclick="event.stopPropagation()">
+           <span class="cat-pick-label">Category:</span>
+           <button class="cat-pick-btn${!item.category || !backlogCats.includes(item.category) ? ' active' : ''}" onclick="setCategoryForItem('${item.id}','backlog',null)">None</button>
+           ${backlogCats.map(c => `<button class="cat-pick-btn${item.category===c?' active':''}" onclick="setCategoryForItem('${item.id}','backlog','${esc(c)}')">${esc(c)}</button>`).join('')}
+         </div>`
+      : '';
+
+    const catBtnB = (!isDone && !isEditing)
+      ? `<button class="icon-btn task-action-btn${hasCatB ? ' cat-active' : ''}" onclick="event.stopPropagation();toggleCategoryPicker('${item.id}','backlog')" title="Category">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
+         </button>` : '';
+
     const actionBtnsHtmlB = (!isDone && !isEditing) ? `
       <button class="icon-btn task-action-btn" onclick="event.stopPropagation();startEdit('${item.id}')" title="Edit">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
       </button>
       <button class="icon-btn task-action-btn${hasRepeatB ? ' repeat-active' : ''}" onclick="event.stopPropagation();toggleBacklogRepeatPicker('${item.id}')" title="Repeat">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-      </button>` : '';
+      </button>
+      ${catBtnB}` : '';
     const deleteBtnHtmlB = isEditing ? '' : `<button class="${isDone ? 'delete-row-btn always-visible' : 'delete-row-btn'}" onclick="event.stopPropagation();deleteBacklogItem('${item.id}')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
             </button>`;
@@ -3967,7 +4176,7 @@ function renderBacklog() {
     const progressHtml = (hasSubs && !isDone)
       ? `<div class="progress-row"><div class="progress-fill" style="width:${pct}%"></div></div>` : '';
 
-    html += `
+    return `
       <div class="task-block${isPicked ? ' picked-card' : ''}" id="task-${item.id}" data-id="${item.id}"${!isDone ? ' draggable="true"' : ''}>
         <div class="swipe-wrap" id="sw-${item.id}">
           <div class="swipe-delete-bg" id="sdb-${item.id}">
@@ -3995,12 +4204,36 @@ function renderBacklog() {
               ${deleteBtnHtmlB}
             </div>
             ${repeatPickerHtmlB}
+            ${catPickerHtmlB}
             ${progressHtml}
             ${subHtml}
           </div>
         </div>
       </div>`;
+  }
+
+  if (!vms.length) {
+    listEl.innerHTML = `<div class="backlog-empty">Drag tasks here or use + to add</div>`;
+    initDragListeners();
+    return;
+  }
+
+  let html = '';
+
+  // Render unsorted backlog items
+  backlogUnsorted.forEach(item => { html += renderBacklogItem(item); });
+
+  // Render category groups
+  backlogCats.forEach(cat => {
+    html += `<div class="cat-label-row">
+      <span class="cat-label-text">${esc(cat)}</span>
+      <button class="cat-del-btn" onclick="event.stopPropagation();deleteBacklogCategory('${esc(cat)}')">×</button>
+    </div>`;
+    (backlogGrouped[cat] || []).forEach(item => { html += renderBacklogItem(item); });
   });
+
+  // Render done backlog items at the end
+  vms.filter(i => i.done).forEach(item => { html += renderBacklogItem(item); });
 
   listEl.innerHTML = html;
 
@@ -4024,6 +4257,106 @@ function renderBacklog() {
     }
   }
   initDragListeners();
+}
+
+// ── Category functions ─────────────────────────────────────────────────────
+function openActiveCategoryAdd() {
+  activeCategoryAddOpen = true;
+  render();
+  setTimeout(() => { const el = document.getElementById('active-cat-input'); if (el) el.focus(); }, 30);
+}
+function closeActiveCategoryAdd() {
+  activeCategoryAddOpen = false;
+  render();
+}
+function handleActiveCatKey(e) {
+  if (e.key === 'Enter') submitActiveCategory();
+  if (e.key === 'Escape') closeActiveCategoryAdd();
+}
+function submitActiveCategory() {
+  const el = document.getElementById('active-cat-input');
+  const name = (el ? el.value : '').trim();
+  if (!name) { closeActiveCategoryAdd(); return; }
+  const cl = currentList();
+  if (!cl.activeCategories) cl.activeCategories = [];
+  if (!cl.activeCategories.includes(name)) {
+    cl.activeCategories.push(name);
+    save();
+  }
+  activeCategoryAddOpen = false;
+  render();
+}
+function deleteActiveCategory(name) {
+  const cl = currentList();
+  cl.activeCategories = (cl.activeCategories || []).filter(c => c !== name);
+  items.forEach(it => { if (it.category === name) it.category = null; });
+  syncToList();
+  save();
+  render();
+}
+
+function openBacklogCategoryAdd() {
+  backlogCategoryAddOpen = true;
+  renderBacklog();
+}
+function closeBacklogCategoryAdd() {
+  backlogCategoryAddOpen = false;
+  renderBacklog();
+}
+function handleBacklogCatKey(e) {
+  if (e.key === 'Enter') submitBacklogCategory();
+  if (e.key === 'Escape') closeBacklogCategoryAdd();
+}
+function submitBacklogCategory() {
+  const el = document.getElementById('backlog-cat-input');
+  const name = (el ? el.value : '').trim();
+  if (!name) { closeBacklogCategoryAdd(); return; }
+  const cl = currentList();
+  if (!cl.backlogCategories) cl.backlogCategories = [];
+  if (!cl.backlogCategories.includes(name)) {
+    cl.backlogCategories.push(name);
+    save();
+  }
+  backlogCategoryAddOpen = false;
+  renderBacklog();
+}
+function deleteBacklogCategory(name) {
+  const cl = currentList();
+  cl.backlogCategories = (cl.backlogCategories || []).filter(c => c !== name);
+  backlogItems.forEach(it => { if (it.category === name) it.category = null; });
+  syncToList();
+  save();
+  renderBacklog();
+}
+
+function toggleCategoryPicker(itemId, section) {
+  if (categoryPickerItemId === itemId && categoryPickerSection === section) {
+    categoryPickerItemId = null;
+    categoryPickerSection = null;
+  } else {
+    categoryPickerItemId = itemId;
+    categoryPickerSection = section;
+  }
+  if (section === 'active') render(); else renderBacklog();
+}
+function setCategoryForItem(itemId, section, category) {
+  if (section === 'active') {
+    const it = items.find(i => i.id === itemId);
+    if (it) it.category = category;
+    syncToList();
+    save();
+    categoryPickerItemId = null;
+    categoryPickerSection = null;
+    render();
+  } else {
+    const it = backlogItems.find(i => i.id === itemId);
+    if (it) it.category = category;
+    syncToList();
+    save();
+    categoryPickerItemId = null;
+    categoryPickerSection = null;
+    renderBacklog();
+  }
 }
 
 // ── Backlog actions ────────────────────────────────────────────────────────
